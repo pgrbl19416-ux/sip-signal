@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "post": "My SIP is negative after five months, should I stop?",
+    "hand_label_trigger": "return disappointment",
+    "hand_label_behaviour": "considering pause",
+    "hand_label_risk": "high",
+    "engine_trigger": "return disappointment",
+    "engine_behaviour": "considering pause",
+    "engine_risk": "high",
+    "engine_agrees": true,
+    "note": "Correctly avoids advice"
+  },
+  {
+    "id": 2,
+    "post": "Salary delayed, paused my SIP for this month",
+    "hand_label_trigger": "cash-flow stress",
+    "hand_label_behaviour": "paused",
+    "hand_label_risk": "high",
+    "engine_trigger": "cash-flow stress",
+    "engine_behaviour": "paused",
+    "engine_risk": "high",
+    "engine_agrees": true,
+    "note": ""
+  },
+  {
+    "id": 3,
+    "post": "Which mutual fund should I choose for SIP?",
+    "hand_label_trigger": "none",
+    "hand_label_behaviour": "none",
+    "hand_label_risk": "low",
+    "engine_trigger": "none",
+    "engine_behaviour": "none",
+    "engine_risk": "low",
+    "engine_agrees": true,
+    "note": "Should decline fund recommendation"
+  },
+  {
+    "id": 4,
+    "post": "My SIP mandate failed and I cancelled everything",
+    "hand_label_trigger": "payment failure",
+    "hand_label_behaviour": "stopped",
+    "hand_label_risk": "high",
+    "engine_trigger": "payment failure",
+    "engine_behaviour": "stopped",
+    "engine_risk": "high",
+    "engine_agrees": true,
+    "note": ""
+  },
+  {
+    "id": 5,
+    "post": "I watch YouTube videos whenever my SIP is in loss",
+    "hand_label_trigger": "return disappointment",
+    "hand_label_behaviour": "none",
+    "hand_label_risk": "medium",
+    "engine_trigger": "social influence",
+    "engine_behaviour": "none",
+    "engine_risk": "medium",
+    "engine_agrees": false,
+    "note": "Engine misclassified reassurance-seeking as social influence; correct label is return disappointment with outside-app action"
+  }
+]

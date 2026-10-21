@@ -1,0 +1,149 @@
+
+import streamlit as st
+import json, re, os
+from datetime import datetime
+
+st.set_page_config(page_title="SIP Signal — AI Discovery Engine", layout="wide")
+
+DATA_FILE = "sample_corpus.jsonl"
+GOLDEN_FILE = "golden_set.json"
+
+DEFAULT_PROMPT = """You are a product-discovery research analyst for Groww.
+Analyse the public post below about SIPs / mutual-fund investing.
+
+Return ONLY valid JSON with these fields:
+{
+  "relevant": true/false,
+  "segment": "first-time investor | salaried | freelancer | student | other",
+  "sip_stage": "before start | months 1-3 | months 4-6 | months 7-12 | after 12 months | unclear",
+  "expectation": "short phrase",
+  "trigger": "market fall | return disappointment | cash-flow stress | payment failure | confusion | social influence | emergency | none",
+  "behaviour": "started | continued | reduced | paused | stopped | redeemed | considering pause | none",
+  "in_app_action": "checked portfolio | contacted support | changed SIP | paused | cancelled | none",
+  "outside_app_action": "asked friends/family | searched YouTube | searched Reddit | read news | none",
+  "emotion": "calm | confused | anxious | disappointed | neutral",
+  "continuation_risk": "low | medium | high",
+  "theme": "short theme name",
+  "evidence_quote": "short verbatim quote",
+  "confidence": 0.0-1.0
+}
+
+Rules:
+- Do not invent facts not present in the post.
+- If the post is irrelevant, set relevant=false and use "none"/"unclear" where appropriate.
+- Do not provide investment advice.
+
+POST:
+"""
+
+@st.cache_data
+def load_corpus():
+    rows=[]
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, encoding="utf-8") as f:
+            for line in f:
+                if line.strip(): rows.append(json.loads(line))
+    return rows
+
+@st.cache_data
+def load_golden():
+    if os.path.exists(GOLDEN_FILE):
+        with open(GOLDEN_FILE, encoding="utf-8") as f: return json.load(f)
+    return []
+
+def rule_based_extract(text):
+    t=text.lower()
+    relevant = any(k in t for k in ["sip","mutual fund","invest","groww","instalment","installment"])
+    trigger="none"
+    for k,v in [("market fall","market fall"),("loss","return disappointment"),("negative","return disappointment"),
+                ("salary","cash-flow stress"),("emergency","emergency"),("failed","payment failure"),
+                ("confus","confusion"),("reddit","social influence"),("youtube","social influence")]:
+        if k in t: trigger=v; break
+    behaviour="none"
+    for k,v in [("pause","paused"),("stop","stopped"),("cancel","stopped"),("redeem","redeemed"),
+                ("continue","continued"),("start","started")]:
+        if k in t: behaviour=v; break
+    risk="high" if behaviour in ["paused","stopped","redeemed"] or trigger in ["cash-flow stress","payment failure","return disappointment"] else "medium" if trigger!="none" else "low"
+    return {
+        "relevant": relevant, "segment":"first-time investor" if "first" in t else "other",
+        "sip_stage":"unclear", "expectation":"unclear", "trigger":trigger, "behaviour":behaviour,
+        "in_app_action":"none", "outside_app_action":"none",
+        "emotion":"anxious" if any(x in t for x in ["worri","anx","panic","stress"]) else "neutral",
+        "continuation_risk":risk, "theme":trigger if trigger!="none" else "general SIP experience",
+        "evidence_quote":text[:180], "confidence":0.62
+    }
+
+def llm_extract(text, provider, api_key, model):
+    try:
+        if provider=="OpenAI":
+            from openai import OpenAI
+            client=OpenAI(api_key=api_key)
+            resp=client.chat.completions.create(model=model, temperature=0,
+                response_format={"type":"json_object"},
+                messages=[{"role":"user","content":DEFAULT_PROMPT+text}])
+            return json.loads(resp.choices[0].message.content)
+        if provider=="Anthropic":
+            import anthropic
+            client=anthropic.Anthropic(api_key=api_key)
+            resp=client.messages.create(model=model, max_tokens=800, temperature=0,
+                system="Return only valid JSON.",
+                messages=[{"role":"user","content":DEFAULT_PROMPT+text}])
+            return json.loads(resp.content[0].text)
+    except Exception as e:
+        st.error(f"LLM extraction failed: {e}")
+    return None
+
+st.title("SIP Signal")
+st.caption("AI-powered discovery engine for first-year SIP continuation · Educational research prototype · Not investment advice")
+
+with st.sidebar:
+    st.header("Engine settings")
+    provider=st.selectbox("LLM provider", ["Rule-based demo","OpenAI","Anthropic"])
+    api_key=st.text_input("API key", type="password")
+    model=st.text_input("Model", value="gpt-4o-mini" if provider=="OpenAI" else "claude-3-5-haiku-latest")
+    st.divider()
+    st.write("Use the rule-based demo without an API key. Add a key to run live LLM extraction.")
+
+rows=load_corpus()
+st.success(f"Loaded {len(rows)} public items from the sample corpus.")
+
+col1,col2=st.columns([2,1])
+with col1:
+    query=st.text_input("Search corpus", placeholder="e.g. pause, negative return, salary delay")
+with col2:
+    risk_filter=st.multiselect("Continuation risk", ["low","medium","high"], default=[])
+
+filtered=[]
+for r in rows:
+    if query and query.lower() not in json.dumps(r).lower(): continue
+    if risk_filter and r.get("continuation_risk") not in risk_filter: continue
+    filtered.append(r)
+
+st.subheader(f"Corpus ({len(filtered)} shown)")
+for r in filtered:
+    with st.expander(f"{r.get('platform','unknown')} · {r.get('date','')} · {r.get('theme', r.get('extracted',{}).get('theme','unprocessed'))}"):
+        st.write(r.get("text",""))
+        st.json(r.get("extracted", {}), expanded=False)
+        if r.get("source_url"): st.markdown(f"[Source]({r['source_url']})")
+
+st.divider()
+st.subheader("Run extraction")
+idx=st.number_input("Corpus row", min_value=0, max_value=max(0,len(rows)-1), value=0)
+if st.button("Extract insights"):
+    text=rows[idx]["text"]
+    if provider=="Rule-based demo":
+        result=rule_based_extract(text)
+    else:
+        result=llm_extract(text, provider, api_key, model) or rule_based_extract(text)
+    st.json(result)
+    st.download_button("Download extraction JSON", json.dumps(result, indent=2), file_name="sip_signal_extraction.json")
+
+st.divider()
+st.subheader("Golden-set evaluation")
+golden=load_golden()
+if golden:
+    agree=sum(1 for g in golden if g.get("engine_agrees"))
+    st.metric("Engine agreement with hand labels", f"{agree}/{len(golden)}", f"{round(100*agree/len(golden))}%")
+    st.dataframe(golden)
+else:
+    st.info("Add golden_set.json with 20 hand-labelled examples.")
