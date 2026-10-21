@@ -121,7 +121,7 @@ for r in rows:
 
 st.subheader(f"Corpus ({len(filtered)} shown)")
 for r in filtered:
-    with st.expander(f"{r.get('platform','unknown')} · {r.get('date','')} · {r.get('theme', r.get('extracted',{}).get('theme','unprocessed'))}"):
+    with st.expander(f"{r.get('platform','unknown')} · {r.get('date','')} · {r.get('theme') or (r.get('extracted') or {}).get('theme') or 'unprocessed'}"):
         st.write(r.get("text",""))
         st.json(r.get("extracted", {}), expanded=False)
         if r.get("source_url"): st.markdown(f"[Source]({r['source_url']})")
