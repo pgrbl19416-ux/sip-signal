@@ -113,22 +113,29 @@ with col1:
 with col2:
     risk_filter=st.multiselect("Continuation risk", ["low","medium","high"], default=[])
 
-filtered=[]
+filtered = []
+
 for r in rows:
+    # Search filter
     if query and query.lower() not in json.dumps(r).lower():
         continue
 
+    # Find continuation risk safely
     item_risk = r.get("continuation_risk")
 
     if item_risk is None:
         extracted = r.get("extracted") or {}
         item_risk = extracted.get("continuation_risk")
 
-    if risk_filter and item_risk not in risk_filter:
-        continue
+    # Apply risk filter only when user has selected something
+    if risk_filter:
+        if item_risk is None:
+            continue
+        if item_risk not in risk_filter:
+            continue
 
     filtered.append(r)
-st.subheader(f"Corpus ({len(filtered)} shown)")
+  st.subheader(f"Corpus ({len(filtered)} shown)")
 for r in filtered:
     with st.expander(f"{r.get('platform','unknown')} · {r.get('date','')} · {r.get('theme') or (r.get('extracted') or {}).get('theme') or 'unprocessed'}"):
         st.write(r.get("text",""))
