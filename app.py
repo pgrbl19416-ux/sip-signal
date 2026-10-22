@@ -146,7 +146,44 @@ def rule_based_extract(text):
         "confidence": confidence
     }
 def gemini_extract(text, api_key, model="gemini-3.8-flash"):
-    try:
+    import time
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key)
+
+    wait_times = [2, 5, 10]
+
+    for attempt, wait_time in enumerate(wait_times, start=1):
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=DEFAULT_PROMPT + text,
+                config=types.GenerateContentConfig(
+                    temperature=0,
+                    response_mime_type="application/json"
+                )
+            )
+
+            return json.loads(response.text)
+
+        except Exception as e:
+            error_text = str(e)
+
+            if "503" in error_text or "UNAVAILABLE" in error_text:
+                if attempt < len(wait_times):
+                    st.warning(
+                        f"Gemini is busy. Retrying in {wait_time} seconds "
+                        f"(attempt {attempt + 1} of {len(wait_times)})."
+                    )
+                    time.sleep(wait_time)
+                    continue
+
+            st.error(f"Gemini extraction failed: {e}")
+            return None
+
+    return None
+       try:
         from google import genai
         from google.genai import types
 
