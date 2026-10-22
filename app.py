@@ -203,8 +203,8 @@ else:
     default_model = ""
 
 model=st.text_input("Model", value=default_model)
-    st.divider()
-    st.write("Use the rule-based demo without an API key. Add a key to run live LLM extraction.")
+st.divider()
+st.write("Use the rule-based demo without an API key. Add a key to run live LLM extraction.")
 
 rows=load_corpus()
 st.success(f"Loaded {len(rows)} public items from the sample corpus.")
