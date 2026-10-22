@@ -52,25 +52,98 @@ def load_golden():
     return []
 
 def rule_based_extract(text):
-    t=text.lower()
-    relevant = any(k in t for k in ["sip","mutual fund","invest","groww","instalment","installment"])
-    trigger="none"
-    for k,v in [("market fall","market fall"),("loss","return disappointment"),("negative","return disappointment"),
-                ("salary","cash-flow stress"),("emergency","emergency"),("failed","payment failure"),
-                ("confus","confusion"),("reddit","social influence"),("youtube","social influence")]:
-        if k in t: trigger=v; break
-    behaviour="none"
-    for k,v in [("pause","paused"),("stop","stopped"),("cancel","stopped"),("redeem","redeemed"),
-                ("continue","continued"),("start","started")]:
-        if k in t: behaviour=v; break
-    risk="high" if behaviour in ["paused","stopped","redeemed"] or trigger in ["cash-flow stress","payment failure","return disappointment"] else "medium" if trigger!="none" else "low"
+    t = text.lower()
+
+    relevant = any(k in t for k in [
+        "sip", "mutual fund", "invest", "groww",
+        "instalment", "installment"
+    ])
+
+    trigger = "none"
+    trigger_signals = 0
+
+    trigger_rules = [
+        ("market fall", "market fall"),
+        ("loss", "return disappointment"),
+        ("negative", "return disappointment"),
+        ("salary", "cash-flow stress"),
+        ("emergency", "emergency"),
+        ("failed", "payment failure"),
+        ("confus", "confusion"),
+        ("reddit", "social influence"),
+        ("youtube", "social influence")
+    ]
+
+    for keyword, label in trigger_rules:
+        if keyword in t:
+            trigger = label
+            trigger_signals += 1
+            break
+
+    behaviour = "none"
+    behaviour_rules = [
+        ("pause", "paused"),
+        ("stop", "stopped"),
+        ("cancel", "stopped"),
+        ("redeem", "redeemed"),
+        ("continue", "continued"),
+        ("start", "started")
+    ]
+
+    behaviour_signals = 0
+
+    for keyword, label in behaviour_rules:
+        if keyword in t:
+            behaviour = label
+            behaviour_signals += 1
+            break
+
+    risk = "low"
+
+    if behaviour in ["paused", "stopped", "redeemed"]:
+        risk = "high"
+    elif trigger in [
+        "cash-flow stress",
+        "payment failure",
+        "return disappointment"
+    ]:
+        risk = "high"
+    elif trigger != "none":
+        risk = "medium"
+
+    # Calculate a simple confidence score
+    base_confidence = 0.40
+
+    if relevant:
+        base_confidence += 0.20
+
+    if trigger != "none":
+        base_confidence += 0.15
+
+    if behaviour != "none":
+        base_confidence += 0.15
+
+    if risk == "high":
+        base_confidence += 0.05
+
+    confidence = round(min(base_confidence, 0.90), 2)
+
     return {
-        "relevant": relevant, "segment":"first-time investor" if "first" in t else "other",
-        "sip_stage":"unclear", "expectation":"unclear", "trigger":trigger, "behaviour":behaviour,
-        "in_app_action":"none", "outside_app_action":"none",
-        "emotion":"anxious" if any(x in t for x in ["worri","anx","panic","stress"]) else "neutral",
-        "continuation_risk":risk, "theme":trigger if trigger!="none" else "general SIP experience",
-        "evidence_quote":text[:180], "confidence":0.62
+        "relevant": relevant,
+        "segment": "first-time investor" if "first" in t else "other",
+        "sip_stage": "unclear",
+        "expectation": "unclear",
+        "trigger": trigger,
+        "behaviour": behaviour,
+        "in_app_action": "none",
+        "outside_app_action": "none",
+        "emotion": "anxious" if any(
+            word in t for word in ["worri", "anx", "panic", "stress"]
+        ) else "neutral",
+        "continuation_risk": risk,
+        "theme": trigger if trigger != "none" else "general SIP experience",
+        "evidence_quote": text[:180],
+        "confidence": confidence
     }
 
 def llm_extract(text, provider, api_key, model):
