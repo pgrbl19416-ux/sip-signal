@@ -183,7 +183,7 @@ def gemini_extract(text, api_key, model="gemini-3.8-flash"):
             return None
 
     return None
-       try:
+        try:
         from google import genai
         from google.genai import types
 
