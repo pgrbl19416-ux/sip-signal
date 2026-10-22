@@ -145,7 +145,7 @@ def rule_based_extract(text):
         "evidence_quote": text[:180],
         "confidence": confidence
     }
-def gemini_extract(text, api_key, model="gemini-2.0-flash"):
+def gemini_extract(text, api_key, model="gemini-3.8-flash"):
     try:
         from google import genai
         from google.genai import types
@@ -198,7 +198,7 @@ if provider == "OpenAI":
 elif provider == "Anthropic":
     default_model = "claude-3-5-haiku-latest"
 elif provider == "Gemini":
-    default_model = "gemini-2.0-flash"
+    default_model = "gemini-3.8-flash"
 else:
     default_model = ""
 
