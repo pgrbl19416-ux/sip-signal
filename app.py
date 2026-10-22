@@ -193,7 +193,7 @@ with st.sidebar:
     st.header("Engine settings")
     provider=st.selectbox("LLM provider", ["Rule-based demo","OpenAI","Anthropic","Gemini"])
     api_key=st.text_input("API key", type="password")
-    if provider == "OpenAI":
+if provider == "OpenAI":
     default_model = "gpt-4o-mini"
 elif provider == "Anthropic":
     default_model = "claude-3-5-haiku-latest"
