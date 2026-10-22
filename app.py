@@ -145,8 +145,28 @@ def rule_based_extract(text):
         "evidence_quote": text[:180],
         "confidence": confidence
     }
+def gemini_extract(text, api_key, model="gemini-2.0-flash"):
+    try:
+        from google import genai
+        from google.genai import types
 
-def llm_extract(text, provider, api_key, model):
+        client = genai.Client(api_key=api_key)
+
+        response = client.models.generate_content(
+            model=model,
+            contents=DEFAULT_PROMPT + text,
+            config=types.GenerateContentConfig(
+                temperature=0,
+                response_mime_type="application/json"
+            )
+        )
+
+        return json.loads(response.text)
+
+    except Exception as e:
+        st.error(f"Gemini extraction failed: {e}")
+        return None
+  def llm_extract(text, provider, api_key, model):
     try:
         if provider=="OpenAI":
             from openai import OpenAI
@@ -171,9 +191,18 @@ st.caption("AI-powered discovery engine for first-year SIP continuation · Educa
 
 with st.sidebar:
     st.header("Engine settings")
-    provider=st.selectbox("LLM provider", ["Rule-based demo","OpenAI","Anthropic"])
+    provider=st.selectbox("LLM provider", ["Rule-based demo","OpenAI","Anthropic","Gemini"])
     api_key=st.text_input("API key", type="password")
-    model=st.text_input("Model", value="gpt-4o-mini" if provider=="OpenAI" else "claude-3-5-haiku-latest")
+    if provider == "OpenAI":
+    default_model = "gpt-4o-mini"
+elif provider == "Anthropic":
+    default_model = "claude-3-5-haiku-latest"
+elif provider == "Gemini":
+    default_model = "gemini-2.0-flash"
+else:
+    default_model = ""
+
+model=st.text_input("Model", value=default_model)
     st.divider()
     st.write("Use the rule-based demo without an API key. Add a key to run live LLM extraction.")
 
@@ -220,8 +249,13 @@ st.subheader("Run extraction")
 idx=st.number_input("Corpus row", min_value=0, max_value=max(0,len(rows)-1), value=0)
 if st.button("Extract insights"):
     text=rows[idx]["text"]
+
     if provider=="Rule-based demo":
         result=rule_based_extract(text)
+
+    elif provider=="Gemini":
+        result=gemini_extract(text, api_key, model) or rule_based_extract(text)
+
     else:
         result=llm_extract(text, provider, api_key, model) or rule_based_extract(text)
     st.json(result)
