@@ -135,7 +135,7 @@ for r in rows:
             continue
 
     filtered.append(r)
-  st.subheader(f"Corpus ({len(filtered)} shown)")
+st.subheader(f"Corpus ({len(filtered)} shown)")
 for r in filtered:
     with st.expander(f"{r.get('platform','unknown')} · {r.get('date','')} · {r.get('theme') or (r.get('extracted') or {}).get('theme') or 'unprocessed'}"):
         st.write(r.get("text",""))
