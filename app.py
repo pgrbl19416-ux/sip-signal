@@ -115,10 +115,19 @@ with col2:
 
 filtered=[]
 for r in rows:
-    if query and query.lower() not in json.dumps(r).lower(): continue
-    if risk_filter and r.get("continuation_risk") not in risk_filter: continue
-    filtered.append(r)
+    if query and query.lower() not in json.dumps(r).lower():
+        continue
 
+    item_risk = r.get("continuation_risk")
+
+    if item_risk is None:
+        extracted = r.get("extracted") or {}
+        item_risk = extracted.get("continuation_risk")
+
+    if risk_filter and item_risk not in risk_filter:
+        continue
+
+    filtered.append(r)
 st.subheader(f"Corpus ({len(filtered)} shown)")
 for r in filtered:
     with st.expander(f"{r.get('platform','unknown')} · {r.get('date','')} · {r.get('theme') or (r.get('extracted') or {}).get('theme') or 'unprocessed'}"):
