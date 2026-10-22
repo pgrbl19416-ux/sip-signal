@@ -166,7 +166,7 @@ def gemini_extract(text, api_key, model="gemini-2.0-flash"):
     except Exception as e:
         st.error(f"Gemini extraction failed: {e}")
         return None
-  def llm_extract(text, provider, api_key, model):
+def llm_extract(text, provider, api_key, model):
     try:
         if provider=="OpenAI":
             from openai import OpenAI
