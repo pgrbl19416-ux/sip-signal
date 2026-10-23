@@ -313,7 +313,7 @@ def gemini_extract(text, api_key, model="gemini-3.8-flash"):
             return None
 
     return None
-   def llm_extract(text, provider, api_key, model):
+def llm_extract(text, provider, api_key, model):
     try:
         if provider=="OpenAI":
             from openai import OpenAI
