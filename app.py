@@ -9,6 +9,134 @@ DATA_FILE = "sample_corpus.jsonl"
 GOLDEN_FILE = "golden_set.json"
 
 DEFAULT_PROMPT = """You are a product-discovery research analyst for Groww.
+INTERVIEW_PROMPT = """
+SYNTHESIS_PROMPT = """
+You are a qualitative researcher synthesizing findings from interviews with
+first-time SIP investors.
+
+Using only the participant analyses below, identify patterns across participants.
+
+Answer these research questions:
+1. Why do people start a SIP, and what do they expect to happen?
+2. What changes in their behavior in the months after starting?
+3. What leads investors to pause, reduce, or stop a SIP?
+4. What do investors check, how often, and how do they feel about it?
+5. What confuses or worries them inside the app?
+6. What do they do outside the app when unsure?
+7. What separates investors who continue from those who quietly drop off?
+8. How do patterns differ across income stability, age, source of money,
+   and influence?
+9. What unmet needs appear consistently?
+
+Rules:
+- Base every finding on the participant analyses.
+- Mention how many participants support each finding, e.g. "4 of 6 participants".
+- Include short supporting quotes.
+- Clearly separate strong patterns from weak or single-participant observations.
+- Do not invent participants, quotes, or patterns.
+
+Return valid JSON:
+{
+  "research_questions": [
+    {
+      "question": "",
+      "finding": "",
+      "participant_count": 0,
+      "supporting_quotes": [],
+      "confidence": "strong | moderate | weak"
+    }
+  ],
+  "segments": [
+    {
+      "segment": "",
+      "pattern": "",
+      "participant_ids": []
+    }
+  ],
+  "unmet_needs": [
+    {
+      "need": "",
+      "participant_count": 0,
+      "evidence": []
+    }
+  ],
+  "continuation_vs_drop_off": {
+    "continuers": [],
+    "drop_offs": [],
+    "key_difference": ""
+  },
+  "product_opportunities": []
+}
+
+Participant analyses:
+"""
+You are a qualitative user-research analyst studying first-time SIP investors.
+
+Analyze the interview notes below and extract evidence relevant to SIP continuation.
+
+Identify:
+1. Why the participant started a SIP and what they expected.
+2. How their behavior changed after starting.
+3. Whether they paused, reduced, stopped, or considered stopping, and why.
+4. What they check in the app, how often, and how it makes them feel.
+5. What confuses or worries them inside the app.
+6. What they do outside the app when unsure.
+7. Factors that may help them continue or cause them to drop off.
+8. User-segment details: income stability, age, source of money, and influences.
+9. Unmet needs or recurring pain points.
+
+Rules:
+- Use only information explicitly present in the notes.
+- Quote the participant exactly where possible.
+- If something is not mentioned, write "Not mentioned".
+- Do not invent insights.
+- Separate facts from interpretation.
+
+Return valid JSON in this format:
+{
+  "participant_id": "",
+  "segment": {
+    "age": "",
+    "occupation": "",
+    "income_stability": "",
+    "source_of_money": "",
+    "influenced_by": ""
+  },
+  "why_started": {
+    "motivation": "",
+    "expectations": "",
+    "evidence": ""
+  },
+  "behavior_after_start": {
+    "checking_frequency": "",
+    "what_they_check": "",
+    "emotional_response": "",
+    "evidence": ""
+  },
+  "pause_reduce_stop": {
+    "status": "",
+    "trigger": "",
+    "decision_process": "",
+    "evidence": ""
+  },
+  "in_app_experience": {
+    "confusions": [],
+    "worries": [],
+    "evidence": []
+  },
+  "outside_app_behavior": {
+    "sources": [],
+    "people_consulted": [],
+    "evidence": []
+  },
+  "continuation_drivers": [],
+  "drop_off_risks": [],
+  "unmet_needs": [],
+  "notable_quotes": []
+}
+
+Interview notes:
+"""
 Analyse the public post below about SIPs / mutual-fund investing.
 
 Return ONLY valid JSON with these fields:
