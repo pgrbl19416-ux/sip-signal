@@ -297,7 +297,7 @@ def gemini_extract(text, api_key, model="gemini-3.8-flash"):
 
             return json.loads(response.text)
 
-                except Exception as e:
+        except Exception as e:
             error_text = str(e)
 
             if "503" in error_text or "UNAVAILABLE" in error_text:
