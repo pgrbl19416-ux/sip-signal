@@ -70,6 +70,9 @@ Return valid JSON:
 
 Participant analyses:
 """
+
+
+INTERVIEW_PROMPT = """
 You are a qualitative user-research analyst studying first-time SIP investors.
 
 Analyze the interview notes below and extract evidence relevant to SIP continuation.
