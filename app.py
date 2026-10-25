@@ -624,7 +624,7 @@ if "last_post_extraction" in st.session_state:
         mime="application/json",
         key="download_public_extraction"
     )
-  st.divider()
+st.divider()
 st.subheader("🧑‍💼 Interview research")
 
 if analysis_mode == "Interview transcript":
