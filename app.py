@@ -481,7 +481,7 @@ st.title("SIP Signal")
 st.caption("AI-powered discovery engine for first-year SIP continuation · Educational research prototype · Not investment advice")
 
 with st.sidebar:
-st.header("SIP Discovery Engine")
+    st.header("SIP Discovery Engine")
 
         page = st.radio(
         "Navigate",
