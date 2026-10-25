@@ -483,7 +483,7 @@ st.caption("AI-powered discovery engine for first-year SIP continuation · Educa
 with st.sidebar:
     st.header("SIP Discovery Engine")
 
-        page = st.radio(
+    page = st.radio(
         "Navigate",
         [
             "Overview",
