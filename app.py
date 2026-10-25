@@ -530,7 +530,6 @@ with st.sidebar:
             value="gemini-2.5-flash",
             key="gemini_model_id"
         )
-    api_key=st.text_input("API key", type="password")
 if provider == "OpenAI":
     default_model = "gpt-4o-mini"
 elif provider == "Anthropic":
