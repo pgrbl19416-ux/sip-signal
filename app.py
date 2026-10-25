@@ -417,7 +417,7 @@ if st.button("Extract insights"):
         result=llm_extract(text, provider, api_key, model) or rule_based_extract(text)
     st.json(result)
     st.download_button("Download extraction JSON", json.dumps(result, indent=2), file_name="sip_signal_extraction.json")
-  st.divider()
+st.divider()
 st.subheader("🧑‍💼 Interview research")
 
 if analysis_mode == "Interview transcript":
