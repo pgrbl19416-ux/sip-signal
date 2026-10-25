@@ -313,6 +313,27 @@ def gemini_extract(text, api_key, model="gemini-3.8-flash"):
             return None
 
     return None
+  
+def gemini_analyze_interview(text, api_key, model="gemini-3.8-flash"):
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key)
+
+    try:
+        response = client.models.generate_content(
+            model=model,
+            contents=INTERVIEW_PROMPT + text,
+            config=types.GenerateContentConfig(
+                temperature=0,
+                response_mime_type="application/json"
+            )
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        st.error(f"Gemini interview analysis failed: {e}")
+        return None
+      
 def llm_extract(text, provider, api_key, model):
     try:
         if provider=="OpenAI":
