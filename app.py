@@ -493,7 +493,7 @@ with st.sidebar:
         key="main_navigation"
     )
 st.divider()
-    st.subheader("Engine settings")
+st.subheader("Engine settings")
 
     analysis_mode = st.radio(
       "Analysis mode",
