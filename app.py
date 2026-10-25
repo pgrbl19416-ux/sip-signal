@@ -492,11 +492,11 @@ with st.sidebar:
         ],
         key="main_navigation"
     )
-st.divider()
-st.subheader("Engine settings")
+    st.divider()
+    st.subheader("Engine settings")
 
     analysis_mode = st.radio(
-      "Analysis mode",
+        "Analysis mode",
         [
             "Customer post",
             "Interview transcript",
@@ -505,7 +505,7 @@ st.subheader("Engine settings")
     )
 
     st.divider()
-    provider=st.selectbox("LLM provider", ["Rule-based demo","OpenAI","Anthropic","Gemini"])
+  provider=st.selectbox("LLM provider", ["Rule-based demo","OpenAI","Anthropic","Gemini"])
     api_key=st.text_input("API key", type="password")
 if provider == "OpenAI":
     default_model = "gpt-4o-mini"
