@@ -5,7 +5,7 @@ from datetime import datetime
 
 st.set_page_config(page_title="SIP Signal — AI Discovery Engine", layout="wide")
 
-DATA_FILE = "sample_corpus.jsonl"
+DATA_FILE = "enriched_corpus.jsonl"
 GOLDEN_FILE = "golden_set.json"
 
 DEFAULT_PROMPT = """You are a product-discovery research analyst for Groww.
