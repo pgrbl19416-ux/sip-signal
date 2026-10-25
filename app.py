@@ -338,7 +338,7 @@ st.caption("AI-powered discovery engine for first-year SIP continuation · Educa
 
 with st.sidebar:
     st.header("Engine settings")
-      analysis_mode = st.radio(
+    analysis_mode = st.radio(
         "Analysis mode",
         [
             "Customer post",
