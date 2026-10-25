@@ -387,8 +387,10 @@ Rules:
 - Distinguish stated needs from analyst-inferred opportunities.
 - Do not claim a relationship is causal.
 - Do not provide investment advice.
-- Every supporting quote must be an exact substring of its original post.
-- Use the supplied post_id to identify supporting records.
+- Every supporting quote must be copied character for character from its original post.
+- Do not paraphrase, shorten, translate, correct grammar, add punctuation, or alter spacing in a quote.
+- Before including a quote, verify that it appears exactly in the original post text.
+- If you cannot identify an exact quote, return an empty supporting_evidence list and explain the limitation.- Use the supplied post_id to identify supporting records.
 - Return exactly one answer per question, in the supplied order.
 - If evidence is insufficient, say so rather than filling the gap.
 
