@@ -515,7 +515,7 @@ with st.sidebar:
         ],
         key="llm_provider"
     )
-      api_key = ""
+   api_key = ""
     model = ""
 
     if provider == "Gemini":
