@@ -333,6 +333,26 @@ def gemini_analyze_interview(text, api_key, model="gemini-3.8-flash"):
     except Exception as e:
         st.error(f"Gemini interview analysis failed: {e}")
         return None
+
+def gemini_synthesize_interviews(text, api_key, model="gemini-3.8-flash"):
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key)
+
+    try:
+        response = client.models.generate_content(
+            model=model,
+            contents=SYNTHESIS_PROMPT + text,
+            config=types.GenerateContentConfig(
+                temperature=0,
+                response_mime_type="application/json"
+            )
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        st.error(f"Gemini synthesis failed: {e}")
+        return None
       
 def llm_extract(text, provider, api_key, model):
     try:
@@ -477,6 +497,47 @@ if analysis_mode == "Interview transcript":
                         "Download interview JSON",
                         data=json.dumps(result, indent=2),
                         file_name=f"interview_{participant_id}.json",
+                        mime="application/json"
+                    )
+st.divider()
+st.subheader("🧠 Cross-interview synthesis")
+
+if analysis_mode == "Synthesize interviews":
+    with st.container(border=True):
+        st.info(
+            "Paste the JSON outputs from all interview analyses. "
+            "Separate each participant with a line containing ---"
+        )
+
+        all_interviews = st.text_area(
+            "Paste interview JSON outputs",
+            height=400,
+            placeholder="Paste interview_P1.json content here\n---\nPaste interview_P2.json content here..."
+        )
+
+        if st.button("Synthesize research findings", type="primary"):
+            if not all_interviews.strip():
+                st.warning("Please paste interview JSON outputs.")
+            elif provider != "Gemini":
+                st.warning("Select Gemini in the sidebar.")
+            elif not api_key:
+                st.warning("Please enter your Gemini API key.")
+            else:
+                with st.spinner("Synthesizing findings across interviews..."):
+                    result = gemini_synthesize_interviews(
+                        all_interviews,
+                        api_key,
+                        model
+                    )
+
+                if result:
+                    st.success("Research synthesis complete")
+                    st.json(result)
+
+                    st.download_button(
+                        "Download synthesis JSON",
+                        data=json.dumps(result, indent=2),
+                        file_name="interview_synthesis.json",
                         mime="application/json"
                     )
 st.divider()
