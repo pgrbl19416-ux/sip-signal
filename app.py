@@ -457,7 +457,7 @@ Return a JSON object with this structure:
         st.error(f"Public research synthesis failed: {error}")
         return None
       
-  def llm_extract(text, provider, api_key, model):
+def llm_extract(text, provider, api_key, model):
     try:
         if provider=="OpenAI":
             from openai import OpenAI
