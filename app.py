@@ -418,7 +418,135 @@ st.divider()
 st.write("Use the rule-based demo without an API key. Add a key to run live LLM extraction.")
 
 rows = load_corpus()
+# Work on a separate copy of the loaded corpus.
+rows = [
+    json.loads(json.dumps(record))
+    for record in rows
+]
 
+with st.sidebar:
+    st.divider()
+    st.subheader("Import public-post extractions")
+
+    extraction_files = st.file_uploader(
+        "Upload downloaded extraction JSON files",
+        type=["json"],
+        accept_multiple_files=True,
+        key="public_extraction_uploads"
+    )
+
+    st.caption(
+        "Use files downloaded from Customer post extraction. "
+        "Do not upload interview or synthesis JSON files here."
+    )
+
+    import_clicked = st.button(
+        "Apply uploaded extractions",
+        key="apply_public_extractions"
+    )
+
+if "imported_public_tags" not in st.session_state:
+    st.session_state["imported_public_tags"] = {}
+
+if import_clicked:
+    if not extraction_files:
+        st.sidebar.warning("Choose at least one extraction file.")
+    else:
+        imported_count = 0
+        problems = []
+
+        for uploaded_file in extraction_files:
+            try:
+                payload = json.loads(
+                    uploaded_file.getvalue().decode("utf-8-sig")
+                )
+
+                if not isinstance(payload, dict):
+                    raise ValueError("Expected one extraction object.")
+
+                row_index = payload.get("row")
+                extracted = payload.get("extracted")
+                original_text = payload.get("text")
+
+                if type(row_index) is not int:
+                    raise ValueError("Missing or invalid row number.")
+
+                if not 0 <= row_index < len(rows):
+                    raise ValueError(
+                        "Row number is outside the current corpus."
+                    )
+
+                if not isinstance(extracted, dict) or not extracted:
+                    raise ValueError("Missing extracted fields.")
+
+                if type(extracted.get("relevant")) is not bool:
+                    raise ValueError(
+                        "The relevant field must be true or false."
+                    )
+
+                current_text = rows[row_index].get("text", "")
+
+                if original_text != current_text:
+                    raise ValueError(
+                        "Post text does not match this corpus row. "
+                        "The corpus may have changed."
+                    )
+
+                st.session_state["imported_public_tags"][
+                    str(row_index)
+                ] = payload
+
+                imported_count += 1
+
+            except (
+                ValueError,
+                TypeError,
+                UnicodeDecodeError
+            ) as error:
+                problems.append(
+                    f"{uploaded_file.name}: {error}"
+                )
+
+        st.sidebar.success(
+            f"Accepted {imported_count} extraction file(s)."
+        )
+
+        for problem in problems:
+            st.sidebar.warning(problem)
+
+# Attach imported tags only when the original post still matches.
+for row_key, payload in st.session_state[
+    "imported_public_tags"
+].items():
+    row_index = int(row_key)
+
+    if (
+        0 <= row_index < len(rows)
+        and rows[row_index].get("text", "") == payload.get("text")
+    ):
+        rows[row_index]["extracted"] = payload["extracted"]
+        rows[row_index]["analysis_method"] = payload.get(
+            "analysis_method",
+            "unknown"
+        )
+        rows[row_index]["analysis_model"] = payload.get("model")
+
+with st.sidebar:
+    st.download_button(
+        "Download enriched corpus",
+        data="\n".join(
+            json.dumps(record, ensure_ascii=False)
+            for record in rows
+        ),
+        file_name="enriched_corpus.jsonl",
+        mime="application/x-ndjson",
+        key="download_enriched_corpus"
+    )
+
+    st.caption(
+        "Imports are kept in this session. Download the enriched "
+        "corpus to keep a permanent copy."
+    )
 if page == "Overview":
     st.header("What public conversations reveal about SIP continuation")
 
