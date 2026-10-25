@@ -515,7 +515,22 @@ with st.sidebar:
         ],
         key="llm_provider"
     )
-api_key=st.text_input("API key", type="password")
+      api_key = ""
+    model = ""
+
+    if provider == "Gemini":
+        api_key = st.text_input(
+            "Gemini API key",
+            type="password",
+            key="gemini_api_key"
+        )
+
+        model = st.text_input(
+            "Model ID",
+            value="gemini-2.5-flash",
+            key="gemini_model_id"
+        )
+      api_key=st.text_input("API key", type="password")
 if provider == "OpenAI":
     default_model = "gpt-4o-mini"
 elif provider == "Anthropic":
