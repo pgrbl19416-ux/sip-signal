@@ -505,8 +505,17 @@ with st.sidebar:
     )
 
     st.divider()
-  provider=st.selectbox("LLM provider", ["Rule-based demo","OpenAI","Anthropic","Gemini"])
-    api_key=st.text_input("API key", type="password")
+      provider = st.selectbox(
+        "LLM provider",
+        [
+            "Rule-based demo",
+            "OpenAI",
+            "Anthropic",
+            "Gemini"
+        ],
+        key="llm_provider"
+    )
+api_key=st.text_input("API key", type="password")
 if provider == "OpenAI":
     default_model = "gpt-4o-mini"
 elif provider == "Anthropic":
