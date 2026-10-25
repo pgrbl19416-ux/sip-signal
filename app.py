@@ -378,9 +378,22 @@ st.title("SIP Signal")
 st.caption("AI-powered discovery engine for first-year SIP continuation · Educational research prototype · Not investment advice")
 
 with st.sidebar:
-    st.header("Engine settings")
+    st.header("SIP Discovery Engine")
+
+    page = st.radio(
+        "Navigate",
+        [
+            "Overview",
+            "Research workspace"
+        ],
+        key="main_navigation"
+    )
+
+    st.divider()
+    st.subheader("Engine settings")
+
     analysis_mode = st.radio(
-        "Analysis mode",
+      "Analysis mode",
         [
             "Customer post",
             "Interview transcript",
@@ -404,9 +417,116 @@ model=st.text_input("Model", value=default_model)
 st.divider()
 st.write("Use the rule-based demo without an API key. Add a key to run live LLM extraction.")
 
-rows=load_corpus()
-st.success(f"Loaded {len(rows)} public items from the sample corpus.")
+rows = load_corpus()
 
+if page == "Overview":
+    st.header("What public conversations reveal about SIP continuation")
+
+    st.write(
+        "Explore the public-post corpus, inspect extracted evidence, "
+        "and analyze interviews about starting, continuing, pausing, "
+        "reducing, and stopping a SIP."
+    )
+
+    tagged_rows = [
+        r for r in rows
+        if isinstance(r.get("extracted"), dict) and r["extracted"]
+    ]
+
+    relevant_rows = [
+        r for r in tagged_rows
+        if r["extracted"].get("relevant") is True
+    ]
+
+    source_counts = {}
+
+    for r in rows:
+        source = r.get("platform") or "Unknown"
+        source_counts[source] = source_counts.get(source, 0) + 1
+
+    known_sources = [
+        source for source in source_counts
+        if source.strip().lower() != "unknown"
+    ]
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("Available public posts", len(rows))
+    col2.metric("Named sources", len(known_sources))
+    col3.metric("Posts with saved tags", len(tagged_rows))
+    col4.metric("Marked relevant", len(relevant_rows))
+
+    st.info(
+        "These counts describe records currently loaded from your corpus file. "
+        "Available posts are not necessarily AI-analyzed posts. "
+        "Saved tags may come from different methods unless their origin "
+        "has been recorded."
+    )
+
+    st.subheader("How the engine works")
+
+    steps = st.columns(5)
+
+    step_content = [
+        ("1. Collect", "Import public reviews, comments, and forum posts."),
+        ("2. Clean", "Remove duplicates, empty records, and personal details."),
+        ("3. Tag", "Extract structured observations and supporting quotes."),
+        ("4. Synthesize", "Compare evidence and identify recurring needs."),
+        ("5. Validate", "Check outputs and test hypotheses in real interviews.")
+    ]
+
+    for column, (title, description) in zip(steps, step_content):
+        with column:
+            st.markdown(f"### {title}")
+            st.write(description)
+
+    st.caption(
+        "This describes the intended workflow. "
+        "It does not mean every loaded record has completed every stage."
+    )
+
+    st.subheader("Where the available posts come from")
+
+    if source_counts:
+        chart_data = [
+            {"Source": source, "Posts": count}
+            for source, count in sorted(source_counts.items())
+        ]
+
+        st.bar_chart(
+            chart_data,
+            x="Source",
+            y="Posts"
+        )
+
+        st.dataframe(
+            chart_data,
+            use_container_width=True,
+            hide_index=True
+        )
+    else:
+        st.warning(
+            "No corpus records found. Check that sample_corpus.jsonl "
+            "exists in your repository."
+        )
+
+    with st.expander("What this dashboard can and cannot establish"):
+        st.write(
+            "- Counts refer to posts, not necessarily unique investors.\n"
+            "- Public posts do not establish your actual 12-month retention rate.\n"
+            "- Missing age or income details must remain unknown.\n"
+            "- AI-extracted quotes and findings need manual review.\n"
+            "- Synthetic test interviews must not count as real research."
+        )
+
+    st.success(
+        "To use your existing tools, select Research workspace "
+        "in the sidebar."
+    )
+
+    st.stop()
+
+st.success(f"Loaded {len(rows)} public items from the sample corpus.")
 col1,col2=st.columns([2,1])
 with col1:
     query=st.text_input("Search corpus", placeholder="e.g. pause, negative return, salary delay")
@@ -444,21 +564,67 @@ for r in filtered:
 
 st.divider()
 st.subheader("Run extraction")
-idx=st.number_input("Corpus row", min_value=0, max_value=max(0,len(rows)-1), value=0)
-if st.button("Extract insights"):
-    text=rows[idx]["text"]
 
-    if provider=="Rule-based demo":
-        result=rule_based_extract(text)
+idx = st.number_input(
+    "Corpus row",
+    min_value=0,
+    max_value=max(0, len(rows) - 1),
+    value=0
+)
 
-    elif provider=="Gemini":
-        result=gemini_extract(text, api_key, model) or rule_based_extract(text)
+if st.button("Extract insights", disabled=not rows):
+    text = rows[int(idx)].get("text", "")
+    result = None
+    method = provider
+
+    if provider == "Rule-based demo":
+        result = rule_based_extract(text)
+
+    elif not api_key.strip():
+        st.warning("Enter an API key before running live extraction.")
+
+    elif not model.strip():
+        st.warning("Enter a model ID available to your account.")
+
+    elif provider == "Gemini":
+        with st.spinner("Extracting public-post evidence..."):
+            result = gemini_extract(text, api_key, model)
 
     else:
-        result=llm_extract(text, provider, api_key, model) or rule_based_extract(text)
-    st.json(result)
-    st.download_button("Download extraction JSON", json.dumps(result, indent=2), file_name="sip_signal_extraction.json")
-st.divider()
+        with st.spinner("Extracting public-post evidence..."):
+            result = llm_extract(text, provider, api_key, model)
+
+    if result is not None:
+        st.session_state["last_post_extraction"] = {
+            "row": int(idx),
+            "analysis_method": method,
+            "model": model if provider != "Rule-based demo" else None,
+            "text": text,
+            "extracted": result
+        }
+
+if "last_post_extraction" in st.session_state:
+    saved_result = st.session_state["last_post_extraction"]
+
+    st.caption(
+        f"Result for corpus row {saved_result['row']} · "
+        f"Method: {saved_result['analysis_method']}"
+    )
+
+    st.json(saved_result["extracted"])
+
+    st.download_button(
+        "Download extraction JSON",
+        data=json.dumps(
+            saved_result,
+            indent=2,
+            ensure_ascii=False
+        ),
+        file_name=f"sip_signal_row_{saved_result['row']}.json",
+        mime="application/json",
+        key="download_public_extraction"
+    )
+  st.divider()
 st.subheader("🧑‍💼 Interview research")
 
 if analysis_mode == "Interview transcript":
@@ -471,7 +637,7 @@ if analysis_mode == "Interview transcript":
             placeholder="Paste your interview notes here..."
         )
 
-        if st.button("Analyze interview", type="primary"):
+if st.button("Analyze interview", type="primary"):
             if not interview_notes.strip():
                 st.warning("Please paste interview notes.")
             elif provider != "Gemini":
@@ -515,7 +681,7 @@ if analysis_mode == "Synthesize interviews":
             placeholder="Paste interview_P1.json content here\n---\nPaste interview_P2.json content here..."
         )
 
-        if st.button("Synthesize research findings", type="primary"):
+if st.button("Synthesize research findings", type="primary"):
             if not all_interviews.strip():
                 st.warning("Please paste interview JSON outputs.")
             elif provider != "Gemini":
