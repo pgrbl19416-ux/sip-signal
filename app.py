@@ -505,7 +505,7 @@ with st.sidebar:
     )
 
     st.divider()
-      provider = st.selectbox(
+    provider = st.selectbox(
         "LLM provider",
         [
             "Rule-based demo",
