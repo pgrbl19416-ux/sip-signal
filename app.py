@@ -417,7 +417,47 @@ if st.button("Extract insights"):
         result=llm_extract(text, provider, api_key, model) or rule_based_extract(text)
     st.json(result)
     st.download_button("Download extraction JSON", json.dumps(result, indent=2), file_name="sip_signal_extraction.json")
+  st.divider()
+st.subheader("🧑‍💼 Interview research")
 
+if analysis_mode == "Interview transcript":
+    with st.container(border=True):
+        participant_id = st.text_input("Participant ID", value="P1")
+
+        interview_notes = st.text_area(
+            "Paste interview notes or transcript",
+            height=300,
+            placeholder="Paste your interview notes here..."
+        )
+
+        if st.button("Analyze interview", type="primary"):
+            if not interview_notes.strip():
+                st.warning("Please paste interview notes.")
+            elif provider != "Gemini":
+                st.warning("Select Gemini in the sidebar.")
+            elif not api_key:
+                st.warning("Please enter your Gemini API key.")
+            else:
+                with st.spinner("Analyzing interview with Gemini..."):
+                    text_with_id = (
+                        f"Participant ID: {participant_id}\n\n{interview_notes}"
+                    )
+                    result = gemini_analyze_interview(
+                        text_with_id,
+                        api_key,
+                        model
+                    )
+
+                if result:
+                    st.success("Interview analysis complete")
+                    st.json(result)
+
+                    st.download_button(
+                        "Download interview JSON",
+                        data=json.dumps(result, indent=2),
+                        file_name=f"interview_{participant_id}.json",
+                        mime="application/json"
+                    )
 st.divider()
 st.subheader("Golden-set evaluation")
 golden=load_golden()
