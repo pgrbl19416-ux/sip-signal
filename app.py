@@ -338,6 +338,16 @@ st.caption("AI-powered discovery engine for first-year SIP continuation · Educa
 
 with st.sidebar:
     st.header("Engine settings")
+      analysis_mode = st.radio(
+        "Analysis mode",
+        [
+            "Customer post",
+            "Interview transcript",
+            "Synthesize interviews"
+        ]
+    )
+
+    st.divider()
     provider=st.selectbox("LLM provider", ["Rule-based demo","OpenAI","Anthropic","Gemini"])
     api_key=st.text_input("API key", type="password")
 if provider == "OpenAI":
