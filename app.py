@@ -1021,11 +1021,18 @@ for row_number, r in enumerate(filtered):
         f"{r.get('date','')} · "
         f"{r.get('theme') or (r.get('extracted') or {}).get('theme') or 'unprocessed'}"
     ):
-      st.write(r.get("text",""))
-        st.json(r.get("extracted", {}), expanded=False)
-        if r.get("source_url"): st.markdown(f"[Source]({r['source_url']})")
+        st.write(r.get("text", ""))
 
-st.divider()
+        st.json(
+            r.get("extracted", {}),
+            expanded=False
+        )
+
+        if r.get("source_url"):
+            st.markdown(
+                f"[Source]({r['source_url']})"
+            )
+        st.divider()
 st.subheader("Run extraction")
 
 idx = st.number_input(
