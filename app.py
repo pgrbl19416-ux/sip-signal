@@ -1043,7 +1043,7 @@ for original_row_number, r in filtered:
             )
             st.success(
                 f"Corpus row {original_row_number} selected for extraction."
-            )            )
+            )            
         st.divider()
 st.subheader("Run extraction")
 
