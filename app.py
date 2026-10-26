@@ -168,13 +168,35 @@ Participant analyses:
 """
 @st.cache_data
 def load_corpus():
-    rows=[]
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, encoding="utf-8") as f:
-            for line in f:
-                if line.strip(): rows.append(json.loads(line))
-    return rows
+    rows = []
 
+    if not os.path.exists(DATA_FILE):
+        st.error(
+            f"Corpus file not found: {DATA_FILE}. "
+            "Upload it to the repository root."
+        )
+        return rows
+
+    with open(DATA_FILE, encoding="utf-8") as file:
+        for line_number, line in enumerate(file, start=1):
+            if not line.strip():
+                continue
+
+            try:
+                record = json.loads(line)
+
+                if not isinstance(record, dict):
+                    raise ValueError("Each line must be a JSON object.")
+
+                rows.append(record)
+
+            except json.JSONDecodeError as error:
+                st.error(
+                    f"Invalid JSON on line {line_number} of "
+                    f"{DATA_FILE}: {error}"
+                )
+
+    return rows
 @st.cache_data
 def load_golden():
     if os.path.exists(GOLDEN_FILE):
@@ -546,7 +568,13 @@ st.divider()
 st.write("Use the rule-based demo without an API key. Add a key to run live LLM extraction.")
 
 rows = load_corpus()
-# Work on a separate copy of the loaded corpus.
+if not rows:
+    st.error(
+        "No public posts were loaded. Check that sample_corpus.jsonl "
+        "exists in the repository root and contains one valid JSON "
+        "object per line."
+    )
+  # Work on a separate copy of the loaded corpus.
 rows = [
     json.loads(json.dumps(record))
     for record in rows
