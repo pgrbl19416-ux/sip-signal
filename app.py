@@ -554,19 +554,7 @@ with st.sidebar:
             value="gemini-2.5-flash",
             key="gemini_model_id"
         )
-if provider == "OpenAI":
-    default_model = "gpt-4o-mini"
-elif provider == "Anthropic":
-    default_model = "claude-3-5-haiku-latest"
-elif provider == "Gemini":
-    default_model = "gemini-3.8-flash"
-else:
-    default_model = ""
-
-model=st.text_input("Model", value=default_model)
-st.divider()
-st.write("Use the rule-based demo without an API key. Add a key to run live LLM extraction.")
-
+if provider == "Gemini":
 rows = load_corpus()
 if not rows:
     st.error(
