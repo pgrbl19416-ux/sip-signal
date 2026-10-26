@@ -993,7 +993,7 @@ with col2:
 
 filtered = []
 
-for r in rows:
+for original_row_number, r in enumerate(rows):
     # Search filter
     if query and query.lower() not in json.dumps(r).lower():
         continue
@@ -1012,14 +1012,15 @@ for r in rows:
         if item_risk not in risk_filter:
             continue
 
-    filtered.append(r)
-st.subheader(f"Corpus ({len(filtered)} shown)")
+    filtered.append((original_row_number, r))
+  st.subheader(f"Corpus ({len(filtered)} shown)")
 
-for row_number, r in enumerate(filtered):
+for original_row_number, r in filtered:
     with st.expander(
-        f"Row {row_number} · {r.get('platform','unknown')} · "
+        f"Corpus row {original_row_number} · "
+        f"{r.get('platform','unknown')} · "
         f"{r.get('date','')} · "
-        f"{r.get('theme') or (r.get('extracted') or {}).get('theme') or 'unprocessed'}"
+        f"{r.get('theme') or (r.get('extracted') or {}).get('theme') or 'Not yet analyzed'}"
     ):
         st.write(r.get("text", ""))
 
@@ -1032,6 +1033,17 @@ for row_number, r in enumerate(filtered):
             st.markdown(
                 f"[Source]({r['source_url']})"
             )
+
+        if st.button(
+            "Extract this post",
+            key=f"extract_post_{original_row_number}"
+        ):
+            st.session_state["selected_extraction_row"] = (
+                original_row_number
+            )
+            st.success(
+                f"Corpus row {original_row_number} selected for extraction."
+            )            )
         st.divider()
 st.subheader("Run extraction")
 
