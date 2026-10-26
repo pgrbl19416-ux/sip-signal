@@ -556,6 +556,7 @@ with st.sidebar:
         )
 if provider == "Gemini":
 rows = load_corpus()
+
 if not rows:
     st.error(
         "No public posts were loaded. Check that sample_corpus.jsonl "
