@@ -554,7 +554,6 @@ with st.sidebar:
             value="gemini-2.5-flash",
             key="gemini_model_id"
         )
-if provider == "Gemini":
 rows = load_corpus()
 
 if not rows:
@@ -563,7 +562,7 @@ if not rows:
         "exists in the repository root and contains one valid JSON "
         "object per line."
     )
-  # Work on a separate copy of the loaded corpus.
+# Work on a separate copy of the loaded corpus.
 rows = [
     json.loads(json.dumps(record))
     for record in rows
