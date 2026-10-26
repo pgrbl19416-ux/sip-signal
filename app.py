@@ -1014,9 +1014,14 @@ for r in rows:
 
     filtered.append(r)
 st.subheader(f"Corpus ({len(filtered)} shown)")
-for r in filtered:
-    with st.expander(f"{r.get('platform','unknown')} · {r.get('date','')} · {r.get('theme') or (r.get('extracted') or {}).get('theme') or 'unprocessed'}"):
-        st.write(r.get("text",""))
+
+for row_number, r in enumerate(filtered):
+    with st.expander(
+        f"Row {row_number} · {r.get('platform','unknown')} · "
+        f"{r.get('date','')} · "
+        f"{r.get('theme') or (r.get('extracted') or {}).get('theme') or 'unprocessed'}"
+    ):
+      st.write(r.get("text",""))
         st.json(r.get("extracted", {}), expanded=False)
         if r.get("source_url"): st.markdown(f"[Source]({r['source_url']})")
 
