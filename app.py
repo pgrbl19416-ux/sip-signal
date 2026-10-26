@@ -1013,7 +1013,7 @@ for original_row_number, r in enumerate(rows):
             continue
 
     filtered.append((original_row_number, r))
-  st.subheader(f"Corpus ({len(filtered)} shown)")
+st.subheader(f"Corpus ({len(filtered)} shown)")
 
 for original_row_number, r in filtered:
     with st.expander(
