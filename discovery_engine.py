@@ -39,8 +39,20 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None:
+    uploaded_file.seek(0)
+    file_name = uploaded_file.name
+    raw_lines = uploaded_file.read().decode("utf-8").splitlines()
+
+    st.write(f"Uploaded file name: {file_name}")
+    st.write(f"Total lines: {len(raw_lines)}")
+
+    for i, line in enumerate(raw_lines[:12], start=1):
+        st.write(f"Line {i}: {line}")
+
     try:
+        uploaded_file.seek(0)
         evidence_df = pd.read_csv(uploaded_file)
+        st.success(f"Loaded {len(evidence_df)} evidence records.")
     except Exception as e:
         st.error(f"Could not read CSV: {e}")
         st.stop()
