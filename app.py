@@ -543,15 +543,24 @@ with st.sidebar:
     api_key = ""
     model = ""
   
-if provider == "Gemini":
-    api_key = st.text_input(
-        "Gemini API key",
-        type="password",
-        key="gemini_api_key"
-    )
+    if provider == "Gemini":
+        model = GEMINI_MODEL
 
-    model = GEMINI_MODEL
-    st.caption(f"Model: {GEMINI_MODEL}")
+        try:
+            api_key = st.secrets["GEMINI_API_KEY"]
+        except Exception:
+            api_key = ""
+
+        if api_key:
+            st.caption("Gemini is configured and ready.")
+        else:
+            st.warning(
+                "Gemini is not configured. "
+                "The app owner must add GEMINI_API_KEY "
+                "in Streamlit Secrets."
+            )
+
+        st.caption(f"Model: {GEMINI_MODEL}")
 rows = load_corpus()
 
 if not rows:
