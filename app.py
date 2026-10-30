@@ -970,8 +970,8 @@ if page == "The nine questions":
     sample_size = st.number_input(
         "Number of posts to include in this test",
         min_value=1,
-        max_value=min(50, len(eligible_records)),
-        value=min(10, len(eligible_records)),
+        max_value=min(len(eligible_records)),
+        value=min(len(eligible_records)),
         step=1,
         key="public_question_sample_size"
     )
