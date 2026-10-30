@@ -724,9 +724,9 @@ with st.sidebar:
     batch_size = st.number_input(
         "Maximum posts in this batch",
         min_value=1,
-        max_value=50,
-        value=5,
-        step=1,
+        max_value=200,
+        value=50,
+        step=10,
         key="automatic_batch_size"
     )
 
