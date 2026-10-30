@@ -967,15 +967,14 @@ if page == "The nine questions":
         )
         st.stop()
 
-    sample_size = st.number_input(
-        "Number of posts to include in this test",
-        min_value=1,
-        max_value=min(len(eligible_records)),
-        value=min(len(eligible_records)),
-        step=1,
-        key="public_question_sample_size"
-    )
-
+    report_sample_size = st.number_input(
+    "Number of posts to include in the report",
+    min_value=1,
+    max_value=5000,
+    value=50,
+    step=10,
+    key="nine_question_sample_size"
+)
     selected_records = eligible_records[:int(sample_size)]
 
     st.info(
