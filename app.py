@@ -8,6 +8,7 @@ st.set_page_config(page_title="SIP Signal — AI Discovery Engine", layout="wide
 DATA_FILE = "sample_corpus.jsonl"
 GOLDEN_FILE = "golden_set.json"
 
+GEMINI_MODEL = "gemini-3.5-flash-lite"
 DEFAULT_PROMPT = """You are a product-discovery research analyst for Groww.
 
 Analyse the public post below about SIPs / mutual-fund investing.
@@ -297,7 +298,7 @@ def rule_based_extract(text):
         "evidence_quote": text[:180],
         "confidence": confidence
     }
-def gemini_extract(text, api_key, model="gemini-3.8-flash"):
+def gemini_extract(text, api_key, model=GEMINI_MODEL):
     import time
     from google import genai
     from google.genai import types
@@ -336,7 +337,7 @@ def gemini_extract(text, api_key, model="gemini-3.8-flash"):
 
     return None
   
-def gemini_analyze_interview(text, api_key, model="gemini-3.8-flash"):
+def gemini_analyze_interview(text, api_key, model=GEMINI_MODEL):
     from google import genai
     from google.genai import types
 
@@ -356,7 +357,7 @@ def gemini_analyze_interview(text, api_key, model="gemini-3.8-flash"):
         st.error(f"Gemini interview analysis failed: {e}")
         return None
 
-def gemini_synthesize_interviews(text, api_key, model="gemini-3.8-flash"):
+def gemini_synthesize_interviews(text, api_key, model=GEMINI_MODEL):
     from google import genai
     from google.genai import types
 
@@ -542,18 +543,15 @@ with st.sidebar:
     api_key = ""
     model = ""
 
-    if provider == "Gemini":
-        api_key = st.text_input(
-            "Gemini API key",
-            type="password",
-            key="gemini_api_key"
-        )
+     if provider == "Gemini":
+    api_key = st.text_input(
+        "Gemini API key",
+        type="password",
+        key="gemini_api_key"
+    )
 
-        model = st.text_input(
-            "Model ID",
-            value="gemini-2.5-flash",
-            key="gemini_model_id"
-        )
+    model = GEMINI_MODEL
+    st.caption(f"Model: {GEMINI_MODEL}")
 rows = load_corpus()
 
 if not rows:
