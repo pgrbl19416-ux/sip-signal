@@ -1189,11 +1189,285 @@ if st.button("Synthesize research findings", type="primary"):
                         mime="application/json"
                     )
 st.divider()
-st.subheader("Golden-set evaluation")
-golden=load_golden()
-if golden:
-    agree=sum(1 for g in golden if g.get("engine_agrees"))
-    st.metric("Engine agreement with hand labels", f"{agree}/{len(golden)}", f"{round(100*agree/len(golden))}%")
-    st.dataframe(golden)
+st.subheader("Live golden-set evaluation")
+
+st.caption(
+    "Run fresh extractions on hand-labelled test posts. "
+    "A case passes only when trigger, behaviour, and continuation "
+    "risk all match the hand labels."
+)
+
+try:
+    golden = load_golden()
+except Exception as error:
+    st.error(f"Could not load golden_set.json: {error}")
+    golden = []
+
+if not isinstance(golden, list):
+    st.error("golden_set.json must contain a JSON list of test cases.")
+    golden = []
+
+def normalize_label(value):
+    return str(value).strip().lower()
+
+field_mapping = {
+    "trigger": "hand_label_trigger",
+    "behaviour": "hand_label_behaviour",
+    "continuation_risk": "hand_label_risk"
+}
+
+allowed_labels = {
+    "trigger": {
+        "market fall", "return disappointment", "cash-flow stress",
+        "payment failure", "confusion", "social influence",
+        "emergency", "none"
+    },
+    "behaviour": {
+        "started", "continued", "reduced", "paused", "stopped",
+        "redeemed", "considering pause", "none"
+    },
+    "continuation_risk": {"low", "medium", "high"}
+}
+
+validation_problems = []
+
+for position, case in enumerate(golden, start=1):
+    if not isinstance(case, dict):
+        validation_problems.append(
+            f"Case {position}: expected a JSON object."
+        )
+        continue
+
+    if not isinstance(case.get("post"), str) or not case["post"].strip():
+        validation_problems.append(
+            f"Case {position}: missing or empty post text."
+        )
+
+    for output_field, hand_field in field_mapping.items():
+        label = normalize_label(case.get(hand_field, ""))
+        if label not in allowed_labels[output_field]:
+            validation_problems.append(
+                f"Case {position}: invalid {hand_field}: "
+                f"{case.get(hand_field)!r}"
+            )
+
+if not golden:
+    st.info("Add hand-labelled examples to golden_set.json.")
+
+elif validation_problems:
+    st.error("Fix these golden-set issues before evaluation:")
+    for problem in validation_problems:
+        st.write(f"- {problem}")
+
 else:
-    st.info("Add golden_set.json with 20 hand-labelled examples.")
+    st.write(f"Golden-set cases available: {len(golden)}")
+    st.caption(
+        f"Selected method: {provider} · "
+        f"Model: {model if provider == 'Gemini' else 'Not applicable'}"
+    )
+
+    st.info(
+        "Gemini evaluation makes one model request per case, "
+        "plus any retries. It uses your API quota and may incur costs."
+    )
+
+    run_evaluation = st.button(
+        "Run live golden-set evaluation",
+        type="primary",
+        key="run_live_golden_evaluation"
+    )
+
+    if run_evaluation:
+        can_run = True
+
+        if provider not in ["Gemini", "Rule-based demo"]:
+            st.warning(
+                "For this evaluator, select Gemini or Rule-based demo."
+            )
+            can_run = False
+
+        elif provider == "Gemini" and (
+            not api_key.strip() or not model.strip()
+        ):
+            st.warning("Enter your Gemini API key and model ID.")
+            can_run = False
+
+        if can_run:
+            results = []
+            progress = st.progress(0)
+            status = st.empty()
+
+            for index, case in enumerate(golden):
+                case_id = case.get("id", index + 1)
+                status.write(
+                    f"Evaluating case {index + 1} of {len(golden)}..."
+                )
+
+                prediction = None
+                error_message = ""
+
+                try:
+                    if provider == "Gemini":
+                        prediction = gemini_extract(
+                            case["post"], api_key, model
+                        )
+                    else:
+                        prediction = rule_based_extract(case["post"])
+
+                    if not isinstance(prediction, dict):
+                        raise ValueError(
+                            "No valid extraction returned. "
+                            "Check the API error displayed above."
+                        )
+
+                    for output_field in field_mapping:
+                        value = normalize_label(
+                            prediction.get(output_field, "")
+                        )
+                        if value not in allowed_labels[output_field]:
+                            raise ValueError(
+                                f"Missing or invalid output: {output_field}"
+                            )
+
+                except Exception as error:
+                    error_message = str(error)
+
+                row = {
+                    "id": case_id,
+                    "post": case["post"],
+                    "status": "error" if error_message else "completed",
+                    "error": error_message
+                }
+
+                for output_field, hand_field in field_mapping.items():
+                    row[f"expected_{output_field}"] = case[hand_field]
+                    row[f"predicted_{output_field}"] = (
+                        prediction.get(output_field)
+                        if isinstance(prediction, dict)
+                        else None
+                    )
+                    row[f"{output_field}_match"] = (
+                        not error_message
+                        and normalize_label(case[hand_field])
+                        == normalize_label(prediction[output_field])
+                    )
+
+                row["case_pass"] = (
+                    not error_message
+                    and all(
+                        row[f"{field}_match"]
+                        for field in field_mapping
+                    )
+                )
+
+                row["raw_prediction"] = prediction
+                results.append(row)
+                progress.progress((index + 1) / len(golden))
+
+            status.success("Evaluation finished.")
+
+            st.session_state["live_golden_report"] = {
+                "created_at_utc": (
+                    datetime.utcnow().isoformat() + "Z"
+                ),
+                "provider": provider,
+                "model": model if provider == "Gemini" else None,
+                "scoring_rule": (
+                    "Exact label match after trimming whitespace and "
+                    "ignoring case. All three fields must match."
+                ),
+                "golden_snapshot": golden,
+                "results": results
+            }
+
+report = st.session_state.get("live_golden_report")
+
+if report:
+    results = report["results"]
+    total = len(results)
+    completed = [
+        row for row in results if row["status"] == "completed"
+    ]
+    passed = sum(row["case_pass"] for row in results)
+    errors = total - len(completed)
+
+    st.markdown("### Latest evaluation run")
+    st.caption(
+        f"Method: {report['provider']} · "
+        f"Model: {report['model'] or 'Not applicable'} · "
+        f"UTC: {report['created_at_utc']}"
+    )
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric(
+        "End-to-end case pass rate",
+        f"{100 * passed / total:.1f}%"
+    )
+    col2.metric("Cases passed", f"{passed}/{total}")
+    col3.metric("Errors / invalid outputs", errors)
+
+    st.caption(
+        "The end-to-end score includes all cases. API errors and invalid "
+        "outputs do not pass. They are reported separately from label "
+        "disagreements."
+    )
+
+    if completed:
+        st.markdown("### Field agreement on completed cases")
+        columns = st.columns(3)
+
+        for column, field in zip(columns, field_mapping):
+            matches = sum(
+                row[f"{field}_match"] for row in completed
+            )
+            column.metric(
+                field.replace("_", " ").title(),
+                f"{matches}/{len(completed)}"
+            )
+
+        completed_passes = sum(
+            row["case_pass"] for row in completed
+        )
+        st.write(
+            "All-three-field agreement on completed cases: "
+            f"{completed_passes}/{len(completed)} "
+            f"({100 * completed_passes / len(completed):.1f}%)."
+        )
+
+    table_rows = [
+        {
+            key: value
+            for key, value in row.items()
+            if key != "raw_prediction"
+        }
+        for row in results
+    ]
+
+    st.dataframe(
+        table_rows,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    with st.expander("Inspect failed cases and errors"):
+        failures = [row for row in results if not row["case_pass"]]
+        if not failures:
+            st.success("All cases passed this run.")
+        for row in failures:
+            st.write(f"Case {row['id']}")
+            st.write(row["post"])
+            st.json(row)
+
+    st.download_button(
+        "Download live evaluation report",
+        data=json.dumps(report, indent=2, ensure_ascii=False),
+        file_name="live_golden_evaluation.json",
+        mime="application/json",
+        key="download_live_golden_evaluation"
+    )
+
+    st.warning(
+        "This is a saved snapshot of the latest run in this session. "
+        "Changing the provider, model, or golden set does not update "
+        "the results until you run evaluation again."
+    )
