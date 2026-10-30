@@ -961,26 +961,32 @@ if page == "The nine questions":
     )
 
     if not eligible_records:
-        st.warning(
-            "No eligible records yet. Run Gemini customer-post extraction, "
-            "download its JSON, and import it using the sidebar."
-        )
-        st.stop()
+    st.warning(
+        "No eligible records yet. Run Gemini customer-post extraction, "
+        "download its JSON, and import it using the sidebar."
+    )
+    st.stop()
 
-    report_sample_size = st.number_input(
+sample_size = st.number_input(
     "Number of posts to include in the report",
     min_value=1,
-    max_value=5000,
-    value=50,
-    step=10,
-    key="nine_question_sample_size"
+    max_value=len(eligible_records),
+    value=len(eligible_records),
+    step=1,
+    key="public_question_sample_size"
 )
-    selected_records = eligible_records[:int(sample_size)]
 
+selected_records = eligible_records[:int(sample_size)]
+
+if len(selected_records) < len(eligible_records):
     st.info(
         f"This run uses the first {len(selected_records)} eligible posts "
         f"in corpus order, out of {len(eligible_records)} eligible posts. "
         "This is a test sample, not a representative sample."
+    )
+else:
+    st.info(
+        f"This run uses all {len(selected_records)} eligible posts."
     )
 
     if st.button(
