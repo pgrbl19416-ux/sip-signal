@@ -812,7 +812,7 @@ if run_batch:
         )
 
         st.rerun()
-   if page == "Overview":
+if page == "Overview":
     st.header("What public conversations reveal about SIP continuation")
 
     st.write(
