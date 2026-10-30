@@ -698,7 +698,7 @@ with st.sidebar:
         "Imports are kept in this session. Download the enriched "
         "corpus to keep a permanent copy."
     )
-  with st.sidebar:
+with st.sidebar:
     st.divider()
     st.subheader("Automatic post analysis")
 
