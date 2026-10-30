@@ -542,7 +542,7 @@ with st.sidebar:
     )
     api_key = ""
     model = ""
-      if provider == "Gemini":
+   if provider == "Gemini":
     api_key = st.text_input(
         "Gemini API key",
         type="password",
