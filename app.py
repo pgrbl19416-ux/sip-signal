@@ -698,7 +698,121 @@ with st.sidebar:
         "Imports are kept in this session. Download the enriched "
         "corpus to keep a permanent copy."
     )
-if page == "Overview":
+  with st.sidebar:
+    st.divider()
+    st.subheader("Automatic post analysis")
+
+    pending_rows = [
+        index
+        for index, record in enumerate(rows)
+        if isinstance(record.get("text"), str)
+        and record["text"].strip()
+        and not (
+            isinstance(record.get("extracted"), dict)
+            and record["extracted"]
+            and str(
+                record.get("analysis_method", "")
+            ).strip().lower() == "gemini"
+            and record.get("analysis_model") == GEMINI_MODEL
+        )
+    ]
+
+    st.caption(
+        f"{len(pending_rows)} posts need analysis with {GEMINI_MODEL}."
+    )
+
+    batch_size = st.number_input(
+        "Maximum posts in this batch",
+        min_value=1,
+        max_value=50,
+        value=5,
+        step=1,
+        key="automatic_batch_size"
+    )
+
+    st.caption(
+        "One Gemini request per post, plus retries. "
+        "This uses your API quota and may incur costs."
+    )
+
+    run_batch = st.button(
+        "Analyze pending posts",
+        key="analyze_pending_posts",
+        disabled=not pending_rows
+    )
+
+    if "batch_analysis_summary" in st.session_state:
+        st.info(st.session_state["batch_analysis_summary"])
+
+if run_batch:
+    if provider != "Gemini":
+        st.sidebar.warning("Select Gemini first.")
+
+    elif not api_key.strip():
+        st.sidebar.warning("Configure your Gemini API key first.")
+
+    else:
+        batch = pending_rows[:int(batch_size)]
+        progress = st.sidebar.progress(0)
+        status = st.sidebar.empty()
+
+        accepted = 0
+        failed = 0
+
+        for position, row_index in enumerate(batch, start=1):
+            status.write(
+                f"Analyzing post {position} of {len(batch)}..."
+            )
+
+            text = rows[row_index]["text"]
+
+            result = gemini_extract(
+                text,
+                api_key,
+                GEMINI_MODEL
+            )
+
+            valid = (
+                isinstance(result, dict)
+                and type(result.get("relevant")) is bool
+            )
+
+            if valid and result["relevant"]:
+                quote = result.get("evidence_quote")
+
+                valid = (
+                    isinstance(quote, str)
+                    and bool(quote.strip())
+                    and quote in text
+                )
+
+            if valid:
+                payload = {
+                    "row": row_index,
+                    "analysis_method": "Gemini",
+                    "model": GEMINI_MODEL,
+                    "text": text,
+                    "extracted": result
+                }
+
+                st.session_state["imported_public_tags"][
+                    str(row_index)
+                ] = payload
+
+                accepted += 1
+
+            else:
+                failed += 1
+
+            progress.progress(position / len(batch))
+
+        st.session_state["batch_analysis_summary"] = (
+            f"Last batch: {accepted} extractions attached; "
+            f"{failed} failed or did not pass basic validation."
+        )
+
+        st.rerun()
+   if page == "Overview":
     st.header("What public conversations reveal about SIP continuation")
 
     st.write(
