@@ -960,7 +960,7 @@ if page == "The nine questions":
         "Post IDs refer to row positions in the current corpus version."
     )
 
-    if not eligible_records:
+if not eligible_records:
     st.warning(
         "No eligible records yet. Run Gemini customer-post extraction, "
         "download its JSON, and import it using the sidebar."
