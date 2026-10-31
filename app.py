@@ -620,7 +620,7 @@ for uploaded_file in extraction_files:
         else:
             payload = json.loads(file_content)
 
-                if not isinstance(payload, dict):
+            if not isinstance(payload, dict):
                     raise ValueError("Expected one extraction object.")
 
                 row_index = payload.get("row")
