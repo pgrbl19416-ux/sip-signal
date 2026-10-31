@@ -606,7 +606,7 @@ if import_clicked:
         imported_count = 0
         problems = []
 
-    for uploaded_file in extraction_files:
+for uploaded_file in extraction_files:
     try:
         file_content = uploaded_file.getvalue().decode("utf-8-sig")
 
