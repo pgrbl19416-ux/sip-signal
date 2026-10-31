@@ -607,69 +607,68 @@ if import_clicked:
         problems = []
 
     for uploaded_file in extraction_files:
-        try:
-            file_content = uploaded_file.getvalue().decode("utf-8-sig")
+    try:
+        file_content = uploaded_file.getvalue().decode("utf-8-sig")
 
-            if uploaded_file.name.lower().endswith(".jsonl"):
-                payload = []
+        if uploaded_file.name.lower().endswith(".jsonl"):
+            payload = []
 
-                for line in file_content.splitlines():
-                    line = line.strip()
-                    if line:
-                        payload.append(json.loads(line))
-            else:
-                payload = json.loads(file_content)
+            for line in file_content.splitlines():
+                line = line.strip()
+                if line:
+                    payload.append(json.loads(line))
+        else:
+            payload = json.loads(file_content)
 
-            row_index = payload.get("row")
-            extracted = payload.get("extracted")
-            original_text = payload.get("text")
+        row_index = payload.get("row")
+        extracted = payload.get("extracted")
+        original_text = payload.get("text")
 
-            if type(row_index) is not int:
-                    raise ValueError("Missing or invalid row number.")
+        if type(row_index) is not int:
+            raise ValueError("Missing or invalid row number.")
 
-            if not 0 <= row_index < len(rows):
-                    raise ValueError(
-                        "Row number is outside the current corpus."
-                    )
+        if not 0 <= row_index < len(rows):
+            raise ValueError(
+                "Row number is outside the current corpus."
+            )
 
-            if not isinstance(extracted, dict) or not extracted:
-                    raise ValueError("Missing extracted fields.")
+        if not isinstance(extracted, dict) or not extracted:
+            raise ValueError("Missing extracted fields.")
 
-            if type(extracted.get("relevant")) is not bool:
-                    raise ValueError(
-                        "The relevant field must be true or false."
-                    )
+        if type(extracted.get("relevant")) is not bool:
+            raise ValueError(
+                "The relevant field must be true or false."
+            )
 
-            current_text = rows[row_index].get("text", "")
+        current_text = rows[row_index].get("text", "")
 
-            if original_text != current_text:
-                    raise ValueError(
-                        "Post text does not match this corpus row. "
-                        "The corpus may have changed."
-                    )
+        if original_text != current_text:
+            raise ValueError(
+                "Post text does not match this corpus row. "
+                "The corpus may have changed."
+            )
 
-            st.session_state["imported_public_tags"][
-                    str(row_index)
-                ] = payload
+        st.session_state["imported_public_tags"][
+            str(row_index)
+        ] = payload
 
-            imported_count += 1
+        imported_count += 1
 
-            except (
-                ValueError,
-                TypeError,
-                UnicodeDecodeError
-            ) as error:
-                problems.append(
-                    f"{uploaded_file.name}: {error}"
-                )
-
-        st.sidebar.success(
-            f"Accepted {imported_count} extraction file(s)."
+    except (
+        ValueError,
+        TypeError,
+        UnicodeDecodeError
+    ) as error:
+        problems.append(
+            f"{uploaded_file.name}: {error}"
         )
 
-        for problem in problems:
-            st.sidebar.warning(problem)
+st.sidebar.success(
+    f"Accepted {imported_count} extraction file(s)."
+)
 
+for problem in problems:
+    st.sidebar.warning(problem)
 # Attach imported tags only when the original post still matches.
 for row_key, payload in st.session_state[
     "imported_public_tags"
