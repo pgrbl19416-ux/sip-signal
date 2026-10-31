@@ -614,7 +614,7 @@ if import_clicked:
                 file_content = uploaded_file.getvalue().decode("utf-8-sig")
 
                 if uploaded_file.name.lower().endswith(".jsonl"):
-    jsonl_records = []
+                    jsonl_records = []
 
     for line in file_content.splitlines():
         line = line.strip()
