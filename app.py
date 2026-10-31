@@ -607,9 +607,18 @@ if import_clicked:
         problems = []
 
         for uploaded_file in extraction_files:
-            try:
-                payload = json.loads(
-                    uploaded_file.getvalue().decode("utf-8-sig")
+    try:
+        file_content = uploaded_file.getvalue().decode("utf-8-sig")
+
+        if uploaded_file.name.lower().endswith(".jsonl"):
+            payload = []
+
+            for line in file_content.splitlines():
+                line = line.strip()
+                if line:
+                    payload.append(json.loads(line))
+        else:
+            payload = json.loads(file_content)
                 )
 
                 if not isinstance(payload, dict):
