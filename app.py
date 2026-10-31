@@ -652,7 +652,7 @@ if import_clicked:
                     str(row_index)
                 ] = payload
 
-                imported_count += 1
+            imported_count += 1
 
             except (
                 ValueError,
