@@ -622,7 +622,7 @@ if import_clicked:
 
             row_index = payload.get("row")
             extracted = payload.get("extracted")
-                original_text = payload.get("text")
+            original_text = payload.get("text")
 
                 if type(row_index) is not int:
                     raise ValueError("Missing or invalid row number.")
