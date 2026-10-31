@@ -602,9 +602,6 @@ if "imported_public_tags" not in st.session_state:
 imported_count = 0
 problems = []
 
-imported_count = 0
-problems = []
-
 if import_clicked:
     if not extraction_files:
         st.sidebar.warning("Choose at least one extraction file.")
@@ -621,109 +618,78 @@ if import_clicked:
                         if line:
                             jsonl_records.append(json.loads(line))
 
-    for payload in jsonl_records:
-        if not isinstance(payload, dict):
-            continue
+                    for payload in jsonl_records:
+                        if not isinstance(payload, dict):
+                            continue
 
-        row_index = payload.get("row")
-        extracted = payload.get("extracted")
-        original_text = payload.get("text")
+                        row_index = payload.get("row")
+                        extracted = payload.get("extracted")
+                        original_text = payload.get("text")
 
-        if type(row_index) is not int:
-            continue
+                        if type(row_index) is not int:
+                            continue
 
-        if not 0 <= row_index < len(rows):
-            continue
+                        if not 0 <= row_index < len(rows):
+                            continue
 
-        if not isinstance(extracted, dict) or not extracted:
-            continue
+                        if not isinstance(extracted, dict) or not extracted:
+                            continue
 
-        if type(extracted.get("relevant")) is not bool:
-            continue
+                        if type(extracted.get("relevant")) is not bool:
+                            continue
 
-        current_text = rows[row_index].get("text", "")
+                        current_text = rows[row_index].get("text", "")
 
-        if original_text != current_text:
-            continue
+                        if original_text != current_text:
+                            continue
 
-        st.session_state["imported_public_tags"][
-            str(row_index)
-        ] = payload
+                        st.session_state["imported_public_tags"][
+                            str(row_index)
+                        ] = payload
 
-        imported_count += 1
+                        imported_count += 1
 
-else:
-    payload = json.loads(file_content)
+                else:
+                    payload = json.loads(file_content)
 
-    if not isinstance(payload, dict):
-        raise ValueError("Uploaded file is not a valid extraction record.")
+                    if not isinstance(payload, dict):
+                        raise ValueError(
+                            "Uploaded file is not a valid extraction record."
+                        )
 
-    row_index = payload.get("row")
-    extracted = payload.get("extracted")
-    original_text = payload.get("text")
+                    row_index = payload.get("row")
+                    extracted = payload.get("extracted")
+                    original_text = payload.get("text")
 
-    if type(row_index) is not int:
-        raise ValueError("Missing or invalid row number.")
+                    if type(row_index) is not int:
+                        raise ValueError("Missing or invalid row number.")
 
-    if not 0 <= row_index < len(rows):
-        raise ValueError(
-            "Row number is outside the current corpus."
-        )
+                    if not 0 <= row_index < len(rows):
+                        raise ValueError(
+                            "Row number is outside the current corpus."
+                        )
 
-    if not isinstance(extracted, dict) or not extracted:
-        raise ValueError("Missing extracted fields.")
+                    if not isinstance(extracted, dict) or not extracted:
+                        raise ValueError("Missing extracted fields.")
 
-    if type(extracted.get("relevant")) is not bool:
-        raise ValueError(
-            "The relevant field must be true or false."
-        )
+                    if type(extracted.get("relevant")) is not bool:
+                        raise ValueError(
+                            "The relevant field must be true or false."
+                        )
 
-    current_text = rows[row_index].get("text", "")
+                    current_text = rows[row_index].get("text", "")
 
-    if original_text != current_text:
-        raise ValueError(
-            "Post text does not match this corpus row. "
-            "The corpus may have changed."
-        )
+                    if original_text != current_text:
+                        raise ValueError(
+                            "Post text does not match this corpus row. "
+                            "The corpus may have changed."
+                        )
 
-    st.session_state["imported_public_tags"][
-        str(row_index)
-    ] = payload
+                    st.session_state["imported_public_tags"][
+                        str(row_index)
+                    ] = payload
 
-    imported_count += 1
-                row_index = payload.get("row")
-                extracted = payload.get("extracted")
-                original_text = payload.get("text")
-
-                if type(row_index) is not int:
-                    raise ValueError("Missing or invalid row number.")
-
-                if not 0 <= row_index < len(rows):
-                    raise ValueError(
-                        "Row number is outside the current corpus."
-                    )
-
-                if not isinstance(extracted, dict) or not extracted:
-                    raise ValueError("Missing extracted fields.")
-
-                if type(extracted.get("relevant")) is not bool:
-                    raise ValueError(
-                        "The relevant field must be true or false."
-                    )
-
-                current_text = rows[row_index].get("text", "")
-
-                if original_text != current_text:
-                    raise ValueError(
-                        "Post text does not match this corpus row. "
-                        "The corpus may have changed."
-                    )
-
-                st.session_state["imported_public_tags"][
-                    str(row_index)
-                ] = payload
-
-                imported_count += 1
+                    imported_count += 1
 
             except (
                 ValueError,
@@ -740,8 +706,7 @@ else:
         )
 
         for problem in problems:
-            st.sidebar.warning(problem)
-          # Attach imported tags only when the original post still matches.
+            st.sidebar.warning(problem)          # Attach imported tags only when the original post still matches.
 for row_key, payload in st.session_state[
     "imported_public_tags"
 ].items():
