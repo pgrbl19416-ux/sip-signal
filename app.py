@@ -606,25 +606,22 @@ if import_clicked:
         imported_count = 0
         problems = []
 
-for uploaded_file in extraction_files:
-    try:
-        file_content = uploaded_file.getvalue().decode("utf-8-sig")
+    for uploaded_file in extraction_files:
+        try:
+            file_content = uploaded_file.getvalue().decode("utf-8-sig")
 
-        if uploaded_file.name.lower().endswith(".jsonl"):
-            payload = []
+            if uploaded_file.name.lower().endswith(".jsonl"):
+                payload = []
 
-            for line in file_content.splitlines():
-                line = line.strip()
-                if line:
-                    payload.append(json.loads(line))
-        else:
-            payload = json.loads(file_content)
+                for line in file_content.splitlines():
+                    line = line.strip()
+                    if line:
+                        payload.append(json.loads(line))
+            else:
+                payload = json.loads(file_content)
 
-            if not isinstance(payload, dict):
-                    raise ValueError("Expected one extraction object.")
-
-                row_index = payload.get("row")
-                extracted = payload.get("extracted")
+            row_index = payload.get("row")
+            extracted = payload.get("extracted")
                 original_text = payload.get("text")
 
                 if type(row_index) is not int:
