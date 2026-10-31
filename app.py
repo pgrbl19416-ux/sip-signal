@@ -619,7 +619,6 @@ if import_clicked:
                     payload.append(json.loads(line))
         else:
             payload = json.loads(file_content)
-                )
 
                 if not isinstance(payload, dict):
                     raise ValueError("Expected one extraction object.")
