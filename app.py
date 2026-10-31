@@ -959,34 +959,34 @@ if page == "The nine questions":
         "Rule-based and unknown-method tags are excluded from this page. "
         "Post IDs refer to row positions in the current corpus version."
     )
-if not eligible_records:
-    st.warning(
-        "No eligible records yet. Run Gemini customer-post extraction, "
-        "download its JSON, and import it using the sidebar."
-    )
-    st.stop()
+    if not eligible_records:
+        st.warning(
+            "No eligible records yet. Run Gemini customer-post extraction, "
+            "download its JSON, and import it using the sidebar."
+        )
+        st.stop()
 
-sample_size = st.number_input(
-    "Number of posts to include in the report",
-    min_value=1,
-    max_value=len(eligible_records),
-    value=len(eligible_records),
-    step=1,
-    key="public_question_sample_size"
-)
-
-selected_records = eligible_records[:int(sample_size)]
-
-if len(selected_records) < len(eligible_records):
-    st.info(
-        f"This run uses the first {len(selected_records)} eligible posts "
-        f"in corpus order, out of {len(eligible_records)} eligible posts. "
-        "This is a test sample, not a representative sample."
+    sample_size = st.number_input(
+        "Number of posts to include in the report",
+        min_value=1,
+        max_value=len(eligible_records),
+        value=len(eligible_records),
+        step=1,
+        key="public_question_sample_size"
     )
-else:
-    st.info(
-        f"This run uses all {len(selected_records)} eligible posts."
-    )
+
+    selected_records = eligible_records[:int(sample_size)]
+
+    if len(selected_records) < len(eligible_records):
+        st.info(
+            f"This run uses the first {len(selected_records)} eligible posts "
+            f"in corpus order, out of {len(eligible_records)} eligible posts. "
+            "This is a test sample, not a representative sample."
+        )
+    else:
+        st.info(
+            f"This run uses all {len(selected_records)} eligible posts."
+        )
 
     if st.button(
         "Generate answers to the nine questions",
@@ -1049,7 +1049,6 @@ else:
             )
 
             st.write(answer.get("finding", "No answer returned."))
-
             evidence_items = answer.get("supporting_evidence", [])
 
             if isinstance(evidence_items, list):
