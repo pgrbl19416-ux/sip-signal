@@ -599,16 +599,16 @@ with st.sidebar:
 if "imported_public_tags" not in st.session_state:
     st.session_state["imported_public_tags"] = {}
 
+imported_count = 0
+problems = []
+
 if import_clicked:
     if not extraction_files:
         st.sidebar.warning("Choose at least one extraction file.")
-    else:
-        imported_count = 0
-        problems = []
 
 for uploaded_file in extraction_files:
     try:
-        file_content = uploaded_file.getvalue().decode("utf-8-sig")
+      file_content = uploaded_file.getvalue().decode("utf-8-sig")
 
         if uploaded_file.name.lower().endswith(".jsonl"):
             payload = []
