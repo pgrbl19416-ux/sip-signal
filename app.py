@@ -614,18 +614,83 @@ if import_clicked:
                 file_content = uploaded_file.getvalue().decode("utf-8-sig")
 
                 if uploaded_file.name.lower().endswith(".jsonl"):
-                    payload = []
+    jsonl_records = []
 
-                    for line in file_content.splitlines():
-                        line = line.strip()
-                        if line:
-                            payload.append(json.loads(line))
-                else:
-                    payload = json.loads(file_content)
+    for line in file_content.splitlines():
+        line = line.strip()
+        if line:
+            jsonl_records.append(json.loads(line))
 
-                if not isinstance(payload, dict):
-                    raise ValueError("Uploaded file is not a valid extraction record.")
+    for payload in jsonl_records:
+        if not isinstance(payload, dict):
+            continue
 
+        row_index = payload.get("row")
+        extracted = payload.get("extracted")
+        original_text = payload.get("text")
+
+        if type(row_index) is not int:
+            continue
+
+        if not 0 <= row_index < len(rows):
+            continue
+
+        if not isinstance(extracted, dict) or not extracted:
+            continue
+
+        if type(extracted.get("relevant")) is not bool:
+            continue
+
+        current_text = rows[row_index].get("text", "")
+
+        if original_text != current_text:
+            continue
+
+        st.session_state["imported_public_tags"][
+            str(row_index)
+        ] = payload
+
+        imported_count += 1
+
+else:
+    payload = json.loads(file_content)
+
+    if not isinstance(payload, dict):
+        raise ValueError("Uploaded file is not a valid extraction record.")
+
+    row_index = payload.get("row")
+    extracted = payload.get("extracted")
+    original_text = payload.get("text")
+
+    if type(row_index) is not int:
+        raise ValueError("Missing or invalid row number.")
+
+    if not 0 <= row_index < len(rows):
+        raise ValueError(
+            "Row number is outside the current corpus."
+        )
+
+    if not isinstance(extracted, dict) or not extracted:
+        raise ValueError("Missing extracted fields.")
+
+    if type(extracted.get("relevant")) is not bool:
+        raise ValueError(
+            "The relevant field must be true or false."
+        )
+
+    current_text = rows[row_index].get("text", "")
+
+    if original_text != current_text:
+        raise ValueError(
+            "Post text does not match this corpus row. "
+            "The corpus may have changed."
+        )
+
+    st.session_state["imported_public_tags"][
+        str(row_index)
+    ] = payload
+
+    imported_count += 1
                 row_index = payload.get("row")
                 extracted = payload.get("extracted")
                 original_text = payload.get("text")
