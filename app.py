@@ -648,7 +648,7 @@ if import_clicked:
                         "The corpus may have changed."
                     )
 
-                st.session_state["imported_public_tags"][
+            st.session_state["imported_public_tags"][
                     str(row_index)
                 ] = payload
 
