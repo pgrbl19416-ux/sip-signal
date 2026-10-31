@@ -624,25 +624,25 @@ if import_clicked:
             extracted = payload.get("extracted")
             original_text = payload.get("text")
 
-                if type(row_index) is not int:
+            if type(row_index) is not int:
                     raise ValueError("Missing or invalid row number.")
 
-                if not 0 <= row_index < len(rows):
+            if not 0 <= row_index < len(rows):
                     raise ValueError(
                         "Row number is outside the current corpus."
                     )
 
-                if not isinstance(extracted, dict) or not extracted:
+            if not isinstance(extracted, dict) or not extracted:
                     raise ValueError("Missing extracted fields.")
 
-                if type(extracted.get("relevant")) is not bool:
+            if type(extracted.get("relevant")) is not bool:
                     raise ValueError(
                         "The relevant field must be true or false."
                     )
 
                 current_text = rows[row_index].get("text", "")
 
-                if original_text != current_text:
+            if original_text != current_text:
                     raise ValueError(
                         "Post text does not match this corpus row. "
                         "The corpus may have changed."
