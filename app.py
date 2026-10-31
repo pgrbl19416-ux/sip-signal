@@ -616,10 +616,10 @@ if import_clicked:
                 if uploaded_file.name.lower().endswith(".jsonl"):
                     jsonl_records = []
 
-    for line in file_content.splitlines():
-        line = line.strip()
-        if line:
-            jsonl_records.append(json.loads(line))
+                    for line in file_content.splitlines():
+                        line = line.strip()
+                        if line:
+                            jsonl_records.append(json.loads(line))
 
     for payload in jsonl_records:
         if not isinstance(payload, dict):
