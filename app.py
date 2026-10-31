@@ -581,7 +581,7 @@ with st.sidebar:
 
     extraction_files = st.file_uploader(
         "Upload downloaded extraction JSON files",
-        type=["json"],
+        type=["json", "jsonl"],
         accept_multiple_files=True,
         key="public_extraction_uploads"
     )
