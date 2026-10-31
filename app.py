@@ -603,8 +603,8 @@ if import_clicked:
     if not extraction_files:
         st.sidebar.warning("Choose at least one extraction file.")
     else:
-        imported_count = 0
-        problems = []
+imported_count = 0
+problems = []
 
 for uploaded_file in extraction_files:
     try:
