@@ -640,7 +640,7 @@ if import_clicked:
                         "The relevant field must be true or false."
                     )
 
-                current_text = rows[row_index].get("text", "")
+            current_text = rows[row_index].get("text", "")
 
             if original_text != current_text:
                     raise ValueError(
