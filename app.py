@@ -302,6 +302,183 @@ def rule_based_extract(text):
         "evidence_quote": text[:180],
         "confidence": confidence
     }
+  def load_golden_set():
+    records = []
+
+    if not os.path.exists(GOLDEN_FILE):
+        return records
+
+    with open(GOLDEN_FILE, "r", encoding="utf-8-sig") as file:
+        for line in file:
+            line = line.strip()
+            if line:
+                try:
+                    record = json.loads(line)
+                    if isinstance(record, dict):
+                        records.append(record)
+                except json.JSONDecodeError:
+                    continue
+
+    return records
+
+
+def normalise_text(value):
+    return re.sub(r"\s+", " ", str(value or "")).strip().lower()
+
+
+def evidence_quote_matches(source_text, evidence_quote):
+    source = normalise_text(source_text)
+    quote = normalise_text(evidence_quote)
+
+    if not quote:
+        return False
+
+    return quote in source
+
+
+def evaluate_ai_output(golden_record, ai_output):
+    checks = {
+        "json_valid": isinstance(ai_output, dict),
+        "relevance_match": False,
+        "evidence_match": False,
+        "confidence_pass": False
+    }
+
+    if not checks["json_valid"]:
+        return {
+            **checks,
+            "passed": False,
+            "reason": "Invalid AI JSON output."
+        }
+
+    ai_relevant = ai_output.get("relevant")
+    golden_relevant = golden_record.get("relevant")
+
+    checks["relevance_match"] = ai_relevant == golden_relevant
+
+    ai_quote = ai_output.get("evidence_quote", "")
+    source_text = golden_record.get("text", "")
+
+    checks["evidence_match"] = evidence_quote_matches(
+        source_text,
+        ai_quote
+    )
+
+    confidence = ai_output.get("confidence", 0)
+
+    try:
+        confidence = float(confidence)
+    except (TypeError, ValueError):
+        confidence = 0
+
+    checks["confidence_pass"] = confidence >= MIN_CONFIDENCE
+
+    passed = (
+        checks["json_valid"]
+        and checks["relevance_match"]
+        and checks["evidence_match"]
+        and checks["confidence_pass"]
+    )
+
+    if not checks["relevance_match"]:
+        reason = "AI relevance label did not match golden-set label."
+    elif not checks["evidence_match"]:
+        reason = "AI evidence quote could not be verified in source text."
+    elif not checks["confidence_pass"]:
+        reason = "AI confidence was below the accepted threshold."
+    else:
+        reason = "Passed."
+
+    return {
+        **checks,
+        "passed": passed,
+        "reason": reason,
+        "ai_relevant": ai_relevant,
+        "golden_relevant": golden_relevant,
+        "confidence": confidence
+    }
+
+
+def run_golden_set_evaluation(rows_by_id, gemini_extract_function):
+    golden_records = load_golden_set()
+
+    if not golden_records:
+        return {
+            "status": "no_golden_set",
+            "message": "No valid golden_set.json found."
+        }
+
+    results = []
+    valid_json_count = 0
+    relevance_match_count = 0
+    evidence_match_count = 0
+
+    for golden_record in golden_records:
+        row_id = str(golden_record.get("row"))
+        post_text = golden_record.get("text", "")
+
+        row_data = rows_by_id.get(row_id, {})
+        corpus_text = row_data.get("text", post_text)
+
+        try:
+            ai_output = gemini_extract_function(corpus_text)
+
+            if isinstance(ai_output, str):
+                ai_output = json.loads(ai_output)
+
+        except (json.JSONDecodeError, TypeError, ValueError):
+            ai_output = {}
+
+        evaluation = evaluate_ai_output(
+            golden_record,
+            ai_output
+        )
+
+        if evaluation["json_valid"]:
+            valid_json_count += 1
+
+        if evaluation["relevance_match"]:
+            relevance_match_count += 1
+
+        if evaluation["evidence_match"]:
+            evidence_match_count += 1
+
+        results.append({
+            "row": row_id,
+            "evaluation": evaluation,
+            "ai_output": ai_output
+        })
+
+    total = len(golden_records)
+
+    json_validity_rate = valid_json_count / total
+    relevance_accuracy = relevance_match_count / total
+    evidence_match_rate = evidence_match_count / total
+
+    passed = (
+        relevance_accuracy >= MIN_RELEVANCE_ACCURACY
+        and evidence_match_rate >= MIN_EVIDENCE_MATCH_RATE
+        and json_validity_rate >= MIN_JSON_VALIDITY_RATE
+    )
+
+    summary = {
+        "status": "passed" if passed else "failed",
+        "total_examples": total,
+        "json_validity_rate": round(json_validity_rate, 2),
+        "relevance_accuracy": round(relevance_accuracy, 2),
+        "evidence_match_rate": round(evidence_match_rate, 2),
+        "thresholds": {
+            "relevance_accuracy": MIN_RELEVANCE_ACCURACY,
+            "evidence_match_rate": MIN_EVIDENCE_MATCH_RATE,
+            "json_validity_rate": MIN_JSON_VALIDITY_RATE
+        },
+        "results": results
+    }
+
+    with open(EVAL_RESULTS_FILE, "w", encoding="utf-8") as file:
+        json.dump(summary, file, ensure_ascii=False, indent=2)
+
+    return summary
 def gemini_extract(text, api_key, model=GEMINI_MODEL):
     import time
     from google import genai
