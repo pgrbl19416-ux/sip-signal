@@ -1039,7 +1039,7 @@ if run_batch:
         )
 
         st.rerun()
-      if page == "AI quality evaluation":
+if page == "AI quality evaluation":
     st.header("AI quality evaluation")
     st.caption(
         "This evaluation compares Gemini extraction against a human-reviewed "
