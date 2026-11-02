@@ -302,7 +302,7 @@ def rule_based_extract(text):
         "evidence_quote": text[:180],
         "confidence": confidence
     }
-  def load_golden_set():
+def load_golden_set():
     records = []
 
     if not os.path.exists(GOLDEN_FILE):
