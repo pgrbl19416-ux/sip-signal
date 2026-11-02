@@ -7,7 +7,11 @@ st.set_page_config(page_title="SIP Signal — AI Discovery Engine", layout="wide
 
 DATA_FILE = "sample_corpus.jsonl"
 GOLDEN_FILE = "golden_set.json"
-
+EVAL_RESULTS_FILE = "evaluation_results.json"
+MIN_RELEVANCE_ACCURACY = 0.80
+MIN_EVIDENCE_MATCH_RATE = 0.80
+MIN_JSON_VALIDITY_RATE = 0.90
+MIN_CONFIDENCE = 0.60
 GEMINI_MODEL = "gemini-3.5-flash-lite"
 DEFAULT_PROMPT = """You are a product-discovery research analyst for Groww.
 
