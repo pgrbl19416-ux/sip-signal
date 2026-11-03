@@ -1262,7 +1262,7 @@ if page == "Research workspace":
                         and bool(rows[row_index]["extracted"])
                     )
 
-                                        payload = {
+                    payload = {
                         "row": row_index,
                         "analysis_method": provider,
                         "model": (
