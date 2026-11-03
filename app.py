@@ -1456,8 +1456,7 @@ if page == "The nine questions":
         )
 
     st.stop()
-
-        st.json(
+            st.json(
             r.get("extracted", {}),
             expanded=False
         )
