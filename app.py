@@ -1394,7 +1394,7 @@ if page == "Overview":
     col3.metric("Posts with saved tags", len(tagged_rows))
     col4.metric("Marked relevant", len(relevant_rows))
 
-        st.info(
+    st.info(
         "These counts combine the original corpus with the "
         "latest extractions saved in Supabase. Each corpus row "
         "is counted once. Re-analyzing a post updates its saved "
