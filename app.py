@@ -1051,9 +1051,142 @@ if run_batch:
 
 if page == "Research workspace":
     st.subheader("Research workspace")
+
     st.caption(
-        "Browse the public-post corpus and inspect AI-extracted evidence."
+        "Browse public posts and save structured extractions. "
+        "Successful extractions automatically update the dashboard "
+        "in this browser session."
     )
+
+    if rows:
+        selected_row = st.number_input(
+            "Corpus row to analyze",
+            min_value=0,
+            max_value=len(rows) - 1,
+            value=0,
+            step=1,
+            key="workspace_extraction_row"
+        )
+
+        row_index = int(selected_row)
+        post_text = rows[row_index].get("text", "")
+
+        st.write("Selected post")
+        st.write(post_text)
+
+        run_extraction = st.button(
+            "Extract and save tags",
+            type="primary",
+            key="workspace_extract_and_save"
+        )
+
+        if run_extraction:
+            result = None
+
+            if not isinstance(post_text, str) or not post_text.strip():
+                st.warning("This post has no usable text.")
+
+            elif provider == "Rule-based demo":
+                result = rule_based_extract(post_text)
+
+            elif not api_key.strip():
+                st.warning(
+                    "Configure an API key for the selected provider."
+                )
+
+            elif not model.strip():
+                st.warning(
+                    "Configure a model for the selected provider."
+                )
+
+            else:
+                with st.spinner("Extracting evidence..."):
+                    if provider == "Gemini":
+                        result = gemini_extract(
+                            post_text,
+                            api_key,
+                            model
+                        )
+                    else:
+                        result = llm_extract(
+                            post_text,
+                            provider,
+                            api_key,
+                            model
+                        )
+
+            if result is not None:
+                valid = (
+                    isinstance(result, dict)
+                    and type(result.get("relevant")) is bool
+                )
+
+                if valid and result["relevant"]:
+                    quote = result.get("evidence_quote")
+
+                    valid = (
+                        isinstance(quote, str)
+                        and bool(quote.strip())
+                        and quote in post_text
+                    )
+
+                if valid:
+                    already_tagged = (
+                        isinstance(
+                            rows[row_index].get("extracted"),
+                            dict
+                        )
+                        and bool(rows[row_index]["extracted"])
+                    )
+
+                    st.session_state["imported_public_tags"][
+                        str(row_index)
+                    ] = {
+                        "row": row_index,
+                        "analysis_method": provider,
+                        "model": (
+                            None
+                            if provider == "Rule-based demo"
+                            else model
+                        ),
+                        "text": post_text,
+                        "extracted": result
+                    }
+
+                    action = (
+                        "Updated existing tags"
+                        if already_tagged
+                        else "Saved new tags"
+                    )
+
+                    st.session_state["workspace_save_notice"] = (
+                        f"{action} for row {row_index}. "
+                        "Dashboard counts have been recalculated."
+                    )
+
+                    st.rerun()
+
+                else:
+                    st.error(
+                        "Extraction was not saved. The result must "
+                        "contain a true/false relevance decision. "
+                        "Relevant posts must also include a nonempty "
+                        "verbatim quote found in the original text."
+                    )
+
+        notice = st.session_state.pop(
+            "workspace_save_notice",
+            None
+        )
+
+        if notice:
+            st.success(notice)
+
+    else:
+        st.warning("No posts are available to analyze.")
+
+    st.divider()
+    st.subheader("Saved post evidence")
 
     for index, record in enumerate(rows):
         post_text = record.get("text", "")
@@ -1065,11 +1198,42 @@ if page == "Research workspace":
             st.write(post_text)
 
             if isinstance(extracted, dict) and extracted:
+                st.caption(
+                    f"Method: "
+                    f"{record.get('analysis_method', 'Unknown')} · "
+                    f"Model: "
+                    f"{record.get('analysis_model') or 'Not recorded'}"
+                )
+
                 st.json(extracted)
+
+                payload = {
+                    "row": index,
+                    "analysis_method": record.get(
+                        "analysis_method",
+                        "unknown"
+                    ),
+                    "model": record.get("analysis_model"),
+                    "text": post_text,
+                    "extracted": extracted
+                }
+
+                st.download_button(
+                    "Download extraction JSON",
+                    data=json.dumps(
+                        payload,
+                        indent=2,
+                        ensure_ascii=False
+                    ),
+                    file_name=f"sip_signal_row_{index}.json",
+                    mime="application/json",
+                    key=f"download_workspace_row_{index}"
+                )
+
             else:
-                st.info("No extraction saved for this post yet.")
-
-
+                st.info(
+                    "No extraction saved for this post yet."
+                )
 if page == "Overview":
     st.header("What public conversations reveal about SIP continuation")
 
@@ -1107,11 +1271,19 @@ if page == "Overview":
     col3.metric("Posts with saved tags", len(tagged_rows))
     col4.metric("Marked relevant", len(relevant_rows))
 
-    st.info(
-        "These counts describe records currently loaded from your corpus file. "
-        "Available posts are not necessarily AI-analyzed posts. "
-        "Saved tags may come from different methods unless their origin "
-        "has been recorded."
+        st.info(
+        "These counts reflect the original corpus plus accepted "
+        "extractions saved or imported in this browser session. "
+        "Each corpus row is counted once. Re-analyzing a tagged "
+        "post updates its result rather than adding another post. "
+        "'Marked relevant' includes only posts whose latest saved "
+        "relevance decision is true."
+    )
+
+    st.caption(
+        "Session changes are not automatically written to "
+        "sample_corpus.jsonl. Download the enriched corpus "
+        "from the sidebar to retain a copy."
     )
 
     st.subheader("How the engine works")
