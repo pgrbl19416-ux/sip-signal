@@ -1056,7 +1056,7 @@ with st.sidebar:
         key="download_enriched_corpus"
     )
 
-        st.caption(
+    st.caption(
         "Accepted extractions are saved in Supabase. "
         "Download the enriched corpus for an additional backup."
     )
