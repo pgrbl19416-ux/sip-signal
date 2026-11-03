@@ -359,7 +359,7 @@ def evaluate_ai_output(golden_record, ai_output):
     ai_quote = ai_output.get("evidence_quote", "")
     source_text = golden_record.get("text", "")
 
-        if golden_relevant is False:
+    if golden_relevant is False:
         # No supporting quote is required for an irrelevant post.
         checks["evidence_match"] = (
             isinstance(ai_quote, str)
