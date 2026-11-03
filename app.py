@@ -1271,7 +1271,7 @@ if page == "Overview":
     col3.metric("Posts with saved tags", len(tagged_rows))
     col4.metric("Marked relevant", len(relevant_rows))
 
-        st.info(
+    st.info(
         "These counts reflect the original corpus plus accepted "
         "extractions saved or imported in this browser session. "
         "Each corpus row is counted once. Re-analyzing a tagged "
