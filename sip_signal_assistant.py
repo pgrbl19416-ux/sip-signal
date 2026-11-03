@@ -145,29 +145,43 @@ def parse_ai_response(response_text):
 
 def quality_check(result, evidence):
     issues = []
+
     if not isinstance(result, dict):
         return ["AI output must be a JSON object."]
-    if not result.get("relevant", False):
-        issues.append("Response marked irrelevant.")
 
-    if not result.get("identified_themes"):
-        issues.append("No themes identified.")
+    if result.get("relevant") is not True:
+        issues.append("Response was not marked relevant.")
 
-    if not result.get("common_patterns"):
-        issues.append("No patterns provided.")
+    required_list_fields = [
+        "identified_themes",
+        "common_patterns",
+        "questions_to_consider",
+        "safe_next_steps",
+    ]
 
-    if not result.get("questions_to_consider"):
-        issues.append("No reflection questions provided.")
+    for field in required_list_fields:
+        value = result.get(field)
+
+        if (
+            not isinstance(value, list)
+            or not value
+            or not all(
+                isinstance(item, str) and item.strip()
+                for item in value
+            )
+        ):
+            issues.append(
+                f"{field} must be a nonempty list of strings."
+            )
 
     quotes = result.get("evidence_quotes", [])
-
-        quotes = result.get("evidence_quotes", [])
 
     def normalize_text(value):
         return " ".join(value.split()).casefold()
 
     if not isinstance(quotes, list) or not quotes:
         issues.append("No valid evidence quotes provided.")
+
     else:
         for index, quote in enumerate(quotes, start=1):
             if not isinstance(quote, dict):
@@ -186,7 +200,8 @@ def quality_check(result, evidence):
                 or not source_url.strip()
             ):
                 issues.append(
-                    f"Evidence quote {index} needs text and a source URL."
+                    f"Evidence quote {index} needs text "
+                    "and a source URL."
                 )
                 continue
 
@@ -198,7 +213,9 @@ def quality_check(result, evidence):
 
             verified = any(
                 normalize_text(quote_text)
-                in normalize_text(row.get("text", "")[:1200])
+                in normalize_text(
+                    row.get("text", "")[:1200]
+                )
                 for row in matching_sources
             )
 
@@ -208,19 +225,45 @@ def quality_check(result, evidence):
                     "in the provided text for its claimed source."
                 )
 
+    for field in ("uncertainty", "disclaimer"):
+        value = result.get(field)
+
+        if not isinstance(value, str) or not value.strip():
+            issues.append(
+                f"{field} must be a nonempty string."
+            )
+
     forbidden_patterns = [
         r"\byou should (?:invest|redeem|sell|buy|stop|pause|continue)\b",
         r"\bi recommend (?:investing|redeeming|selling|buying|stopping|pausing|continuing)\b",
-        r"\byou must (?:invest|redeem|sell|buy|stop|pause|continue)\b"
+        r"\byou must (?:invest|redeem|sell|buy|stop|pause|continue)\b",
     ]
 
-    answer_text = json.dumps(result).lower()
+    # Inspect generated guidance, not quoted public-post text.
+    guidance_fields = [
+        "identified_themes",
+        "common_patterns",
+        "questions_to_consider",
+        "uncertainty",
+        "safe_next_steps",
+        "disclaimer",
+    ]
+
+    answer_text = json.dumps(
+        {
+            field: result.get(field)
+            for field in guidance_fields
+        },
+        ensure_ascii=False
+    ).lower()
 
     if any(
         re.search(pattern, answer_text)
         for pattern in forbidden_patterns
     ):
-        issues.append("Response appears to contain direct investment advice.")
+        issues.append(
+            "Response appears to contain direct investment advice."
+        )
 
     return issues
 
