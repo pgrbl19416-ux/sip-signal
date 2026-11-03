@@ -612,18 +612,32 @@ def main():
         )
         return
 
-    if not generate:
-        st.info(
-            "Choose a situation and click **Generate evidence-based reflection**."
-        )
+        if not generate:
+        if gate_passed:
+            st.info(
+                "Choose a situation and click "
+                "Generate evidence-based reflection."
+            )
+        elif gate_is_current:
+            st.info(
+                "Review the failed evaluation cases. "
+                "Resolve the issues and rerun evaluation "
+                "before generating a reflection."
+            )
+        else:
+            st.info(
+                "Run the golden-set evaluation first. "
+                "Generation is available only after "
+                "the current configuration passes."
+            )
 
         st.warning(
-            "This tool does not provide investment advice, recommendations, "
-            "or predictions."
+            "This tool does not provide investment advice, "
+            "recommendations, or predictions."
         )
 
         return
-
+        
     full_situation = f"{situation}. {details}".strip()
 
     evidence = retrieve_evidence(
