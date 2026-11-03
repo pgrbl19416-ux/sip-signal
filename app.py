@@ -705,7 +705,6 @@ with st.sidebar:
             "Overview",
             "The nine questions",
             "Research workspace",
-            "AI quality evaluation"
         ],
         key="main_navigation"
     )
@@ -1049,103 +1048,6 @@ if run_batch:
         )
 
         st.rerun()
-if page == "AI quality evaluation":
-    st.header("AI quality evaluation")
-    st.caption(
-        "This evaluation compares Gemini extraction against a human-reviewed "
-        "golden set. Failed or uncertain outputs are withheld for review."
-    )
-
-    if "evaluation_result" not in st.session_state:
-        st.session_state["evaluation_result"] = None
-
-    if st.button(
-        "Run golden-set evaluation",
-        key="run_golden_set_evaluation"
-    ):
-        if provider != "Gemini":
-            st.warning("Select Gemini as the LLM provider first.")
-        elif not api_key.strip():
-            st.warning("Configure your Gemini API key first.")
-        else:
-            with st.spinner("Evaluating Gemini extraction against golden set..."):
-                st.session_state["evaluation_result"] = run_golden_set_evaluation(
-                    rows_by_id,
-                    lambda text: gemini_extract(
-                        text,
-                        api_key,
-                        GEMINI_MODEL
-                    )
-                )
-
-            st.rerun()
-
-    evaluation_result = st.session_state["evaluation_result"]
-
-    if evaluation_result is None:
-        st.info(
-            "Run the evaluation to check whether Gemini extraction meets "
-            "the quality threshold."
-        )
-
-    elif evaluation_result["status"] == "no_golden_set":
-        st.warning(evaluation_result["message"])
-
-    elif evaluation_result["status"] == "passed":
-        st.success("Gemini extraction passed the quality gate.")
-
-    else:
-        st.error("Gemini extraction failed the quality gate.")
-
-    if evaluation_result and evaluation_result["status"] != "no_golden_set":
-        col1, col2, col3 = st.columns(3)
-
-        col1.metric(
-            "Relevance accuracy",
-            f"{evaluation_result['relevance_accuracy'] * 100:.0f}%"
-        )
-
-        col2.metric(
-            "Evidence match rate",
-            f"{evaluation_result['evidence_match_rate'] * 100:.0f}%"
-        )
-
-        col3.metric(
-            "JSON validity",
-            f"{evaluation_result['json_validity_rate'] * 100:.0f}%"
-        )
-
-        st.caption(
-            "Quality gate: relevance accuracy ≥ 80%, evidence match ≥ 80%, "
-            "JSON validity ≥ 90%."
-        )
-
-        with st.expander("View individual evaluation results"):
-            for result in evaluation_result["results"]:
-                evaluation = result["evaluation"]
-
-                if evaluation["passed"]:
-                    status = "✅ Passed"
-                else:
-                    status = "❌ Failed"
-
-                st.markdown(
-                    f"**Row {result['row']} — {status}**  \n"
-                    f"**Reason:** {evaluation['reason']}"
-                )
-
-                if isinstance(result["ai_output"], dict):
-                    st.caption(
-                        f"AI relevant: {result['ai_output'].get('relevant')} · "
-                        f"Golden relevant: {evaluation['golden_relevant']} · "
-                        f"Confidence: {evaluation['confidence']}"
-                    )
-
-    st.divider()
-    st.info(
-        "This evaluation checks AI extraction quality only. "
-        "SIP Signal does not provide investment advice."
-    )
 
 if page == "Research workspace":
     st.subheader("Research workspace")
