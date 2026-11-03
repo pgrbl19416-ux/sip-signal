@@ -1457,45 +1457,6 @@ if page == "The nine questions":
         )
 
     st.stop()
-st.success(f"Loaded {len(rows)} public items from the sample corpus.")
-col1,col2=st.columns([2,1])
-with col1:
-    query=st.text_input("Search corpus", placeholder="e.g. pause, negative return, salary delay")
-with col2:
-    risk_filter=st.multiselect("Continuation risk", ["low","medium","high"], default=[])
-
-filtered = []
-
-for original_row_number, r in enumerate(rows):
-    # Search filter
-    if query and query.lower() not in json.dumps(r).lower():
-        continue
-
-    # Find continuation risk safely
-    item_risk = r.get("continuation_risk")
-
-    if item_risk is None:
-        extracted = r.get("extracted") or {}
-        item_risk = extracted.get("continuation_risk")
-
-    # Apply risk filter only when user has selected something
-    if risk_filter:
-        if item_risk is None:
-            continue
-        if item_risk not in risk_filter:
-            continue
-
-    filtered.append((original_row_number, r))
-st.subheader(f"Corpus ({len(filtered)} shown)")
-
-for original_row_number, r in filtered:
-    with st.expander(
-        f"Corpus row {original_row_number} · "
-        f"{r.get('platform','unknown')} · "
-        f"{r.get('date','')} · "
-        f"{r.get('theme') or (r.get('extracted') or {}).get('theme') or 'Not yet analyzed'}"
-    ):
-        st.write(r.get("text", ""))
 
         st.json(
             r.get("extracted", {}),
