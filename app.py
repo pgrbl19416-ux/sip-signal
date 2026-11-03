@@ -1136,6 +1136,8 @@ if page == "AI quality evaluation":
         "This evaluation checks AI extraction quality only. "
         "SIP Signal does not provide investment advice."
     )
+
+st.caption(f"DEBUG: current page is {page}")
 if page == "Research workspace":
     st.subheader("Research workspace")
     st.caption(
@@ -1155,6 +1157,8 @@ if page == "Research workspace":
                 st.json(extracted)
             else:
                 st.info("No extraction saved for this post yet.")
+
+
 if page == "Overview":
     st.header("What public conversations reveal about SIP continuation")
 
@@ -1261,6 +1265,8 @@ if page == "Overview":
     )
 
     st.stop()
+
+
 if page == "The nine questions":
     st.header("The nine research questions")
 
