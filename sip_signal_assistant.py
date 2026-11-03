@@ -2,6 +2,8 @@ import json
 import os
 import re
 import time
+import hashlib
+import inspect
 
 import streamlit as st
 from google import genai
@@ -11,6 +13,8 @@ DATA_FILE = "auto_tagged_corpus.jsonl"
 GOLDEN_FILE = "golden_set.jsonl"
 
 MODEL_NAME = "gemini-3.5-flash-lite"
+GOLDEN_PASS_THRESHOLD = 0.80
+GATE_VERSION = "sip-assistant-gate-v1"
 
 st.set_page_config(
     page_title="SIP Signal Assistant",
@@ -141,7 +145,8 @@ def parse_ai_response(response_text):
 
 def quality_check(result, evidence):
     issues = []
-
+    if not isinstance(result, dict):
+        return ["AI output must be a JSON object."]
     if not result.get("relevant", False):
         issues.append("Response marked irrelevant.")
 
@@ -156,11 +161,52 @@ def quality_check(result, evidence):
 
     quotes = result.get("evidence_quotes", [])
 
-    if not quotes:
-        issues.append("No evidence quotes provided.")
+        quotes = result.get("evidence_quotes", [])
 
-    if evidence and not quotes:
-        issues.append("Evidence exists but was not cited.")
+    def normalize_text(value):
+        return " ".join(value.split()).casefold()
+
+    if not isinstance(quotes, list) or not quotes:
+        issues.append("No valid evidence quotes provided.")
+    else:
+        for index, quote in enumerate(quotes, start=1):
+            if not isinstance(quote, dict):
+                issues.append(
+                    f"Evidence quote {index} is not an object."
+                )
+                continue
+
+            quote_text = quote.get("quote")
+            source_url = quote.get("source_url")
+
+            if (
+                not isinstance(quote_text, str)
+                or not quote_text.strip()
+                or not isinstance(source_url, str)
+                or not source_url.strip()
+            ):
+                issues.append(
+                    f"Evidence quote {index} needs text and a source URL."
+                )
+                continue
+
+            matching_sources = [
+                row
+                for row in evidence
+                if row.get("source_url") == source_url
+            ]
+
+            verified = any(
+                normalize_text(quote_text)
+                in normalize_text(row.get("text", "")[:1200])
+                for row in matching_sources
+            )
+
+            if not verified:
+                issues.append(
+                    f"Evidence quote {index} was not found "
+                    "in the provided text for its claimed source."
+                )
 
     forbidden_patterns = [
         r"\byou should (?:invest|redeem|sell|buy|stop|pause|continue)\b",
@@ -201,12 +247,20 @@ def run_golden_evaluation():
 
     if not golden_cases:
         st.warning("No golden-set cases found.")
-        return
+        return {
+            "passed": False,
+            "pass_rate": 0.0,
+            "total": 0,
+            "results": [],
+        }
 
     passed = 0
     results = []
 
-    progress = st.progress(0, text="Running golden-set evaluation...")
+    progress = st.progress(
+        0,
+        text="Running golden-set evaluation..."
+    )
 
     for index, case in enumerate(golden_cases, start=1):
         evidence = retrieve_evidence(
@@ -227,7 +281,9 @@ def run_golden_evaluation():
                 contents=[
                     types.Content(
                         role="user",
-                        parts=[types.Part.from_text(text=prompt)]
+                        parts=[
+                            types.Part.from_text(text=prompt)
+                        ]
                     )
                 ],
                 config=types.GenerateContentConfig(
@@ -237,22 +293,41 @@ def run_golden_evaluation():
             )
 
             result = parse_ai_response(response.text)
-
             issues = quality_check(result, evidence)
 
-            expected_themes = set(case.get("expected_themes", []))
-            identified_themes = set(result.get("identified_themes", []))
+            expected_themes = set(
+                case.get("expected_themes", [])
+            )
+            identified_themes = set(
+                result.get("identified_themes", [])
+            )
 
             theme_overlap = len(
-                expected_themes.intersection(identified_themes)
+                expected_themes.intersection(
+                    identified_themes
+                )
             )
 
-            case_passed = (
-                not issues
-                and theme_overlap > 0
-                and len(result.get("evidence_quotes", []))
-                >= case.get("minimum_evidence_quotes", 1)
+            minimum_quotes = case.get(
+                "minimum_evidence_quotes",
+                1
             )
+
+            if theme_overlap == 0:
+                issues.append(
+                    "No identified theme matches the expected themes."
+                )
+
+            if (
+                len(result.get("evidence_quotes", []))
+                < minimum_quotes
+            ):
+                issues.append(
+                    "Fewer evidence quotes than required: "
+                    f"minimum {minimum_quotes}."
+                )
+
+            case_passed = not issues
 
             if case_passed:
                 passed += 1
@@ -261,32 +336,47 @@ def run_golden_evaluation():
                 "id": case["id"],
                 "passed": case_passed,
                 "issues": issues,
-                "identified_themes": list(identified_themes),
-                "expected_themes": list(expected_themes)
+                "identified_themes": sorted(identified_themes),
+                "expected_themes": sorted(expected_themes),
             })
 
         except Exception as error:
             results.append({
                 "id": case["id"],
                 "passed": False,
-                "issues": [f"API or parsing error: {error}"],
+                "issues": [
+                    f"API, parsing, or validation error: {error}"
+                ],
                 "identified_themes": [],
-                "expected_themes": case.get("expected_themes", [])
+                "expected_themes": case.get(
+                    "expected_themes",
+                    []
+                ),
             })
 
         progress.progress(
             index / len(golden_cases),
-            text=f"Evaluated {index} of {len(golden_cases)} cases"
+            text=(
+                f"Evaluated {index} "
+                f"of {len(golden_cases)} cases"
+            )
         )
 
         time.sleep(1)
 
     accuracy = passed / len(golden_cases)
 
-    st.metric("Golden-set pass rate", f"{accuracy:.0%}")
+    st.metric(
+        "Golden-set pass rate",
+        f"{accuracy:.0%}"
+    )
 
     for result in results:
-        status = "✅ Pass" if result["passed"] else "❌ Fail"
+        status = (
+            "✅ Pass"
+            if result["passed"]
+            else "❌ Fail"
+        )
 
         st.write(
             f"{status} — {result['id']} | "
@@ -295,8 +385,63 @@ def run_golden_evaluation():
         )
 
         if result["issues"]:
-            st.write(f"Issues: {', '.join(result['issues'])}")
+            st.write(
+                f"Issues: {'; '.join(result['issues'])}"
+            )
 
+    # This block is outside both loops.
+    gate_passed = accuracy >= GOLDEN_PASS_THRESHOLD
+
+    if gate_passed:
+        st.success(
+            "Golden-set quality gate passed. "
+            "The assistant is enabled for this configuration."
+        )
+    else:
+        st.error(
+            "Golden-set quality gate failed. "
+            "New AI reflections are blocked."
+        )
+
+    return {
+        "passed": gate_passed,
+        "pass_rate": accuracy,
+        "total": len(golden_cases),
+        "results": results,
+    }
+
+
+def current_gate_fingerprint():
+    payload = {
+        "version": GATE_VERSION,
+        "model": MODEL_NAME,
+        "threshold": GOLDEN_PASS_THRESHOLD,
+        "temperature": 0.2,
+        "code": {
+            function.__name__: inspect.getsource(function)
+            for function in (
+                retrieve_evidence,
+                build_prompt,
+                parse_ai_response,
+                quality_check,
+                run_golden_evaluation,
+            )
+        },
+        "files": {},
+    }
+
+    for path in (DATA_FILE, GOLDEN_FILE):
+        if os.path.exists(path):
+            with open(path, "rb") as file:
+                payload["files"][path] = hashlib.sha256(
+                    file.read()
+                ).hexdigest()
+        else:
+            payload["files"][path] = None
+
+    encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
+
+    return hashlib.sha256(encoded).hexdigest()
 
 def main():
     st.title("📊 SIP Signal Assistant")
@@ -363,8 +508,66 @@ def main():
 
         evaluate = st.button("Run golden-set evaluation")
 
+        fingerprint = current_gate_fingerprint()
+
     if evaluate:
-        run_golden_evaluation()
+        # Remove any previous approval before starting a fresh evaluation.
+        st.session_state.pop("assistant_quality_gate", None)
+
+        # Refresh cached files before evaluating their current contents.
+        load_corpus.clear()
+        load_golden_set.clear()
+        corpus = load_corpus()
+
+        try:
+            report = run_golden_evaluation()
+        except Exception as error:
+            st.error(f"Evaluation could not complete: {error}")
+            report = {
+                "passed": False,
+                "pass_rate": 0.0,
+                "total": 0,
+                "results": [],
+            }
+
+        report["fingerprint"] = fingerprint
+        st.session_state["assistant_quality_gate"] = report
+
+    gate = st.session_state.get("assistant_quality_gate")
+
+    gate_is_current = (
+        gate is not None
+        and gate.get("fingerprint") == fingerprint
+    )
+
+    gate_passed = (
+        gate_is_current
+        and gate.get("passed") is True
+    )
+
+    if gate_passed:
+        st.success(
+            "Evaluation gate: passed "
+            f"({gate['pass_rate']:.0%} case pass rate). "
+            "Each new response will also be checked before display."
+        )
+    elif gate_is_current:
+        st.warning(
+            "Evaluation gate: failed. "
+            "New AI reflections are blocked."
+        )
+    else:
+        st.info(
+            "Evaluation gate: not evaluated for the current configuration. "
+            "Run the golden-set evaluation before generating a reflection."
+        )
+
+    if generate and not gate_passed:
+        safe_fallback(
+            "The current assistant configuration has not passed "
+            "the golden-set evaluation."
+        )
+        return
 
     if not generate:
         st.info(
