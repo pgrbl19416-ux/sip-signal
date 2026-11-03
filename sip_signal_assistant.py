@@ -612,7 +612,7 @@ def main():
         )
         return
 
-        if not generate:
+    if not generate:
         if gate_passed:
             st.info(
                 "Choose a situation and click "
