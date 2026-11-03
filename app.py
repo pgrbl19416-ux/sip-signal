@@ -1136,6 +1136,25 @@ if page == "AI quality evaluation":
         "This evaluation checks AI extraction quality only. "
         "SIP Signal does not provide investment advice."
     )
+if page == "Research workspace":
+    st.subheader("Research workspace")
+    st.caption(
+        "Browse the public-post corpus and inspect AI-extracted evidence."
+    )
+
+    for index, record in enumerate(rows):
+        post_text = record.get("text", "")
+        extracted = record.get("extracted", {})
+
+        with st.expander(
+            f"Row {index} · {post_text[:120]}"
+        ):
+            st.write(post_text)
+
+            if isinstance(extracted, dict) and extracted:
+                st.json(extracted)
+            else:
+                st.info("No extraction saved for this post yet.")
 if page == "Overview":
     st.header("What public conversations reveal about SIP continuation")
 
