@@ -1,7 +1,8 @@
 
 import streamlit as st
 import json, re, os
-from datetime import datetime
+from datetime import datetime, timezone
+import hashlib
 
 st.set_page_config(page_title="SIP Signal — AI Discovery Engine", layout="wide")
 
@@ -171,6 +172,121 @@ Return valid JSON:
 
 Participant analyses:
 """
+def get_discovery_database():
+    from supabase import create_client
+
+    return create_client(
+        st.secrets["SUPABASE_URL"],
+        st.secrets["SUPABASE_KEY"]
+    )
+
+
+def discovery_post_key(text):
+    return hashlib.sha256(
+        text.encode("utf-8")
+    ).hexdigest()
+
+
+def save_public_extraction(payload):
+    """
+    Save permanently before allowing the caller to report success.
+    """
+    try:
+        text = payload.get("text")
+        extracted = payload.get("extracted")
+
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("Missing original post text.")
+
+        if (
+            not isinstance(extracted, dict)
+            or type(extracted.get("relevant")) is not bool
+        ):
+            raise ValueError(
+                "Extraction needs a true/false relevance decision."
+            )
+
+        if extracted["relevant"]:
+            quote = extracted.get("evidence_quote")
+
+            if (
+                not isinstance(quote, str)
+                or not quote.strip()
+                or quote not in text
+            ):
+                raise ValueError(
+                    "Relevant extraction needs a verified source quote."
+                )
+
+        database = get_discovery_database()
+
+        database.table("discovery_extractions").upsert(
+            {
+                "post_key": discovery_post_key(text),
+                "post_text": text,
+                "extracted": extracted,
+                "analysis_method": (
+                    payload.get("analysis_method") or "unknown"
+                ),
+                "analysis_model": payload.get("model"),
+                "updated_at": datetime.now(
+                    timezone.utc
+                ).isoformat()
+            },
+            on_conflict="post_key"
+        ).execute()
+
+    except Exception as error:
+        st.error(
+            "Permanent save failed. This extraction has NOT "
+            f"been confirmed as saved. Details: {error}"
+        )
+        st.stop()
+
+
+def load_saved_public_extractions():
+    """
+    Fetch current database results without caching the records.
+    """
+    try:
+        database = get_discovery_database()
+
+        saved_records = []
+        page_size = 500
+        offset = 0
+
+        while True:
+            response = (
+                database.table("discovery_extractions")
+                .select(
+                    "post_key, post_text, extracted, "
+                    "analysis_method, analysis_model, updated_at"
+                )
+                .order("post_key")
+                .range(offset, offset + page_size - 1)
+                .execute()
+            )
+
+            batch = response.data or []
+            saved_records.extend(batch)
+
+            if len(batch) < page_size:
+                break
+
+            offset += page_size
+
+        return {
+            record["post_key"]: record
+            for record in saved_records
+        }
+
+    except Exception as error:
+        st.error(
+            "Could not load saved extractions from Supabase. "
+            "The dashboard is paused rather than showing "
+            f"potentially incomplete counts. Details: {error}"
+        )
+        st.stop()
 @st.cache_data
 def load_corpus():
     rows = []
@@ -902,22 +1018,32 @@ if import_clicked:
 
         for problem in problems:
             st.sidebar.warning(problem)          # Attach imported tags only when the original post still matches.
-for row_key, payload in st.session_state[
-    "imported_public_tags"
-].items():
-    row_index = int(row_key)
+# Merge permanent database extractions into the original corpus.
+saved_public_extractions = load_saved_public_extractions()
+
+for record in rows:
+    text = record.get("text")
+
+    if not isinstance(text, str) or not text.strip():
+        continue
+
+    saved = saved_public_extractions.get(
+        discovery_post_key(text)
+    )
 
     if (
-        0 <= row_index < len(rows)
-        and rows[row_index].get("text", "") == payload.get("text")
+        saved
+        and saved.get("post_text") == text
+        and isinstance(saved.get("extracted"), dict)
     ):
-        rows[row_index]["extracted"] = payload["extracted"]
-        rows[row_index]["analysis_method"] = payload.get(
+        record["extracted"] = saved["extracted"]
+        record["analysis_method"] = saved.get(
             "analysis_method",
             "unknown"
         )
-        rows[row_index]["analysis_model"] = payload.get("model")
-
+        record["analysis_model"] = saved.get(
+            "analysis_model"
+        )
 with st.sidebar:
     st.download_button(
         "Download enriched corpus",
@@ -930,9 +1056,9 @@ with st.sidebar:
         key="download_enriched_corpus"
     )
 
-    st.caption(
-        "Imports are kept in this session. Download the enriched "
-        "corpus to keep a permanent copy."
+        st.caption(
+        "Accepted extractions are saved in Supabase. "
+        "Download the enriched corpus for an additional backup."
     )
 with st.sidebar:
     st.divider()
@@ -1031,10 +1157,7 @@ if run_batch:
                     "extracted": result
                 }
 
-                st.session_state["imported_public_tags"][
-                    str(row_index)
-                ] = payload
-
+                save_public_extraction(payload)
                 accepted += 1
 
             else:
@@ -1139,9 +1262,7 @@ if page == "Research workspace":
                         and bool(rows[row_index]["extracted"])
                     )
 
-                    st.session_state["imported_public_tags"][
-                        str(row_index)
-                    ] = {
+                                        payload = {
                         "row": row_index,
                         "analysis_method": provider,
                         "model": (
@@ -1152,6 +1273,8 @@ if page == "Research workspace":
                         "text": post_text,
                         "extracted": result
                     }
+
+                    save_public_extraction(payload)
 
                     action = (
                         "Updated existing tags"
@@ -1271,19 +1394,17 @@ if page == "Overview":
     col3.metric("Posts with saved tags", len(tagged_rows))
     col4.metric("Marked relevant", len(relevant_rows))
 
-    st.info(
-        "These counts reflect the original corpus plus accepted "
-        "extractions saved or imported in this browser session. "
-        "Each corpus row is counted once. Re-analyzing a tagged "
-        "post updates its result rather than adding another post. "
-        "'Marked relevant' includes only posts whose latest saved "
-        "relevance decision is true."
+        st.info(
+        "These counts combine the original corpus with the "
+        "latest extractions saved in Supabase. Each corpus row "
+        "is counted once. Re-analyzing a post updates its saved "
+        "result rather than adding another post."
     )
 
     st.caption(
-        "Session changes are not automatically written to "
-        "sample_corpus.jsonl. Download the enriched corpus "
-        "from the sidebar to retain a copy."
+        "Accepted extractions are stored permanently in Supabase "
+        "and reloaded on each app rerun. The original corpus file "
+        "is not modified."
     )
 
     st.subheader("How the engine works")
