@@ -1137,7 +1137,6 @@ if page == "AI quality evaluation":
         "SIP Signal does not provide investment advice."
     )
 
-st.caption(f"DEBUG: current page is {page}")
 if page == "Research workspace":
     st.subheader("Research workspace")
     st.caption(
