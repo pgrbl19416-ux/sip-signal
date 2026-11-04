@@ -1,62 +1,12 @@
-[
-  {
-    "id": 1,
-    "post": "My SIP is negative after five months, should I stop?",
-    "hand_label_trigger": "return disappointment",
-    "hand_label_behaviour": "considering pause",
-    "hand_label_risk": "high",
-    "engine_trigger": "return disappointment",
-    "engine_behaviour": "considering pause",
-    "engine_risk": "high",
-    "engine_agrees": true,
-    "note": "Correctly avoids advice"
-  },
-  {
-    "id": 2,
-    "post": "Salary delayed, paused my SIP for this month",
-    "hand_label_trigger": "cash-flow stress",
-    "hand_label_behaviour": "paused",
-    "hand_label_risk": "high",
-    "engine_trigger": "cash-flow stress",
-    "engine_behaviour": "paused",
-    "engine_risk": "high",
-    "engine_agrees": true,
-    "note": ""
-  },
-  {
-    "id": 3,
-    "post": "Which mutual fund should I choose for SIP?",
-    "hand_label_trigger": "none",
-    "hand_label_behaviour": "none",
-    "hand_label_risk": "low",
-    "engine_trigger": "none",
-    "engine_behaviour": "none",
-    "engine_risk": "low",
-    "engine_agrees": true,
-    "note": "Should decline fund recommendation"
-  },
-  {
-    "id": 4,
-    "post": "My SIP mandate failed and I cancelled everything",
-    "hand_label_trigger": "payment failure",
-    "hand_label_behaviour": "stopped",
-    "hand_label_risk": "high",
-    "engine_trigger": "payment failure",
-    "engine_behaviour": "stopped",
-    "engine_risk": "high",
-    "engine_agrees": true,
-    "note": ""
-  },
-  {
-    "id": 5,
-    "post": "I watch YouTube videos whenever my SIP is in loss",
-    "hand_label_trigger": "return disappointment",
-    "hand_label_behaviour": "none",
-    "hand_label_risk": "medium",
-    "engine_trigger": "social influence",
-    "engine_behaviour": "none",
-    "engine_risk": "medium",
-    "engine_agrees": false,
-    "note": "Engine misclassified reassurance-seeking as social influence; correct label is return disappointment with outside-app action"
-  }
-]
+{"row": 2, "text": "autopay always failed, ipo always autopay failed, than I uninstall", "relevant": true, "expected_trigger": "payment failure", "expected_behaviour": "stopped", "expected_evidence_quote": "autopay always failed"}
+{"row": 5, "text": "my money has blocked to incorrect kyc information", "relevant": true, "expected_trigger": "confusion", "expected_behaviour": "continued", "expected_evidence_quote": "my money has blocked to incorrect kyc information"}
+{"row": 8, "text": "my found is missing and support team is not helping", "relevant": true, "expected_trigger": "payment failure", "expected_behaviour": "stopped", "expected_evidence_quote": "my found is missing and support team is not helping"}
+{"row": 10, "text": "auto payment fails in mutual fund sip and there is no retry done by the app", "relevant": true, "expected_trigger": "payment failure", "expected_behaviour": "considering pause", "expected_evidence_quote": "auto payment fails in mutual fund sip and there is no retry done by the app"}
+{"row": 11, "text": "Actually there should be a consolidated view of all the mutual fund investments", "relevant": true, "expected_trigger": "confusion", "expected_behaviour": "continued", "expected_evidence_quote": "consolidated view of all the mutual fund investments"}
+{"row": 12, "text": "App takes more Time in Showing Daily Gain/Loss of Mutual Funds.", "relevant": true, "expected_trigger": "confusion", "expected_behaviour": "started", "expected_evidence_quote": "App takes more Time in Showing Daily Gain/Loss of Mutual Funds."}
+{"row": 15, "text": "They should show the total expense ratio for each mutual fund including GST and Statutory charges.", "relevant": true, "expected_trigger": "confusion", "expected_behaviour": "continued", "expected_evidence_quote": "total expense ratio for each mutual fund including GST and Statutory charges"}
+{"row": 51, "text": "So ….within 3 year redeem cheyyunnathano nallee…5 yr akumbo return veendum kurayukayallee", "relevant": true, "expected_trigger": "return disappointment", "expected_behaviour": "considering pause", "expected_evidence_quote": "within 3 year redeem cheyyunnathano nallee"}
+{"row": 54, "text": "He scared me for sometime regarding stopping SIPs...but the comments restored my faith! 😅", "relevant": true, "expected_trigger": "social influence", "expected_behaviour": "continued", "expected_evidence_quote": "the comments restored my faith"}
+{"row": 6, "text": "They have their specific YT channels, for example, Mutual funds by Groww, that's a good marketing thing + A very useful thing for users too.", "relevant": true, "expected_trigger": "social influence", "expected_behaviour": "continued", "expected_evidence_quote": "specific YT channels"}
+{"row": 30, "text": "This post is about a completely unrelated topic.", "relevant": false, "expected_trigger": "none", "expected_behaviour": "none", "expected_evidence_quote": ""}
+{"row": 31, "text": "This review does not discuss SIPs, mutual funds, investing, payments, or portfolio behaviour.", "relevant": false, "expected_trigger": "none", "expected_behaviour": "none", "expected_evidence_quote": ""}
