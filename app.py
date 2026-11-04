@@ -684,7 +684,7 @@ def gemini_synthesize_interviews(text, api_key, model=GEMINI_MODEL):
         st.error(f"Gemini synthesis failed: {e}")
         return None
       
-def answer_public__questions(records, api_key, model):
+def answer_public_research_questions(records, api_key, model):
     from google import genai
     from google.genai import types
 
