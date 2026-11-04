@@ -1172,8 +1172,8 @@ if run_batch:
 
         st.rerun()
 
-if page == "Research workspace":
-    st.subheader("Research workspace")
+if page == "Research Workspace":
+    st.subheader("Research Workspace")
     if analysis_mode == "Interview transcript":
         st.caption(
             "Analyze anonymized interview notes. "
