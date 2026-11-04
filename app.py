@@ -820,7 +820,7 @@ with st.sidebar:
         [
             "Overview",
             "The nine questions",
-            " workspace",
+            "Research Workspace",
         ],
         key="main_navigation"
     )
