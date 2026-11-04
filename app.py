@@ -1174,7 +1174,7 @@ if run_batch:
 
 if page == "Research workspace":
     st.subheader("Research workspace")
-      if analysis_mode == "Interview transcript":
+    if analysis_mode == "Interview transcript":
         st.caption(
             "Analyze anonymized interview notes. "
             "Interview results are kept separate from public-post tags."
