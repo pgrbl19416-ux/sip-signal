@@ -1044,6 +1044,34 @@ for record in rows:
         record["analysis_model"] = saved.get(
             "analysis_model"
         )
+  for row_key, payload in st.session_state[
+    "imported_public_tags"
+].items():
+    try:
+        row_index = int(row_key)
+    except (TypeError, ValueError):
+        continue
+
+    if not 0 <= row_index < len(rows):
+        continue
+
+    imported_text = payload.get("text")
+    current_text = rows[row_index].get("text")
+    imported_extracted = payload.get("extracted")
+
+    if (
+        imported_text == current_text
+        and isinstance(imported_extracted, dict)
+        and imported_extracted
+    ):
+        rows[row_index]["extracted"] = imported_extracted
+        rows[row_index]["analysis_method"] = payload.get(
+            "analysis_method",
+            "imported"
+        )
+        rows[row_index]["analysis_model"] = payload.get(
+            "model"
+        )
 with st.sidebar:
     st.download_button(
         "Download enriched corpus",
