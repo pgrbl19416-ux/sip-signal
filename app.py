@@ -953,7 +953,9 @@ if import_clicked:
 
                         if original_text != current_text:
                             continue
-
+                          
+                        save_public_extraction(payload)
+                      
                         st.session_state["imported_public_tags"][
                             str(row_index)
                         ] = payload
@@ -995,6 +997,7 @@ if import_clicked:
                             "Post text does not match this corpus row. "
                             "The corpus may have changed."
                         )
+                    save_public_extraction(payload)
 
                     st.session_state["imported_public_tags"][
                         str(row_index)
@@ -1177,7 +1180,7 @@ if run_batch:
                 )
 
             if valid:
-                payload = {
+                 = {
                     "row": row_index,
                     "analysis_method": "Gemini",
                     "model": GEMINI_MODEL,
