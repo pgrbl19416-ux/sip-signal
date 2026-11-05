@@ -1180,7 +1180,7 @@ if run_batch:
                 )
 
             if valid:
-                 = {
+                payload = {
                     "row": row_index,
                     "analysis_method": "Gemini",
                     "model": GEMINI_MODEL,
