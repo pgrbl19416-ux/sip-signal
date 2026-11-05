@@ -1044,7 +1044,7 @@ for record in rows:
         record["analysis_model"] = saved.get(
             "analysis_model"
         )
-  for row_key, payload in st.session_state[
+for row_key, payload in st.session_state[
     "imported_public_tags"
 ].items():
     try:
