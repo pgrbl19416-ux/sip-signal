@@ -527,6 +527,7 @@ def evaluate_ai_output(golden_record, ai_output):
 
 def run_golden_set_evaluation(rows_by_id, gemini_extract_function):
     golden_records = load_golden_set()
+    st.write(f"Golden-set examples loaded: {len(golden_records)}")
 
     if not golden_records:
         return {
