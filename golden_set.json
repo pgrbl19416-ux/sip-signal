@@ -1,20 +1,20 @@
-{"row": "0", "text": "I started a SIP last month and the value is already down. I am wondering whether I should stop investing.", "relevant": true}
-{"row": "1", "text": "My SIP debit failed because I did not maintain enough balance. I am not sure whether it will retry automatically.", "relevant": true}
-{"row": "2", "text": "I have been investing through SIPs for two years and want to increase my monthly amount.", "relevant": true}
-{"row": "3", "text": "Looking for restaurant recommendations in Bangalore for a weekend dinner.", "relevant": false}
-{"row": "4", "text": "I paused my SIP after the market fell because seeing red numbers every day made me anxious.", "relevant": true}
-{"row": "5", "text": "Best laptop under 60000 for coding and college work?", "relevant": false}
-{"row": "6", "text": "I started a small SIP from my salary to build a habit of investing without thinking about it every month.", "relevant": true}
-{"row": "7", "text": "My income is irregular, so I am worried that my SIP debit may fail in some months.", "relevant": true}
-{"row": "8", "text": "Can anyone suggest a good gym near Andheri West?", "relevant": false}
-{"row": "9", "text": "I checked my portfolio after a market fall and felt confused about whether short-term losses mean my SIP is failing.", "relevant": true}
-{"row": "10", "text": "I want to pause my SIP for a few months because of an unexpected family expense.", "relevant": true}
-{"row": "11", "text": "Which phone should I buy under 30000? Camera and battery are important.", "relevant": false}
-{"row": "12", "text": "I asked my friends whether I should stop my SIP after poor returns, and most said to stay invested for the long term.", "relevant": true}
-{"row": "13", "text": "I redeemed my mutual-fund investment because I needed money for a medical emergency.", "relevant": true}
-{"row": "14", "text": "Looking for a good dentist in Pune. Any recommendations?", "relevant": false}
-{"row": "15", "text": "My first SIP instalment went through, but I do not understand why my portfolio value is lower than the amount invested.", "relevant": true}
-{"row": "16", "text": "I reduced my SIP amount after my business had a slow season, but I want to continue investing.", "relevant": true}
-{"row": "17", "text": "What are some good budget travel destinations in India for a solo trip?", "relevant": false}
-{"row": "18", "text": "I stopped my SIP because I did not understand the app interface and could not find clear information about my payment status.", "relevant": true}
-{"row": "19", "text": "I continued my SIP despite a market dip because I understand that short-term volatility is normal for long-term investing.", "relevant": true}
+{"row": "0", "source": "App Store review", "text": "I started a SIP through the app last month. The interface was easy, but I am confused why my portfolio value is lower than the amount I invested.", "relevant": true}
+{"row": "1", "source": "Play Store review", "text": "My SIP debit failed because I did not keep enough money in my bank account. I cannot understand whether it will retry automatically or whether I need to do something.", "relevant": true}
+{"row": "2", "source": "YouTube comment", "text": "I have been doing SIPs for two years. I want to increase my monthly amount now that my salary has improved.", "relevant": true}
+{"row": "3", "source": "App Store review", "text": "The app is good for tracking expenses, but I mostly use it for UPI payments and bill reminders.", "relevant": false}
+{"row": "4", "source": "TradingQ&A", "text": "I paused my SIP after the market fell because seeing my portfolio in red every day made me anxious. Should I resume it now?", "relevant": true}
+{"row": "5", "source": "Play Store review", "text": "Please add dark mode and improve the login speed. The investment features are fine but the app feels slow sometimes.", "relevant": false}
+{"row": "6", "source": "YouTube comment", "text": "I started a small SIP from my salary so that I can invest automatically without making a decision every month.", "relevant": true}
+{"row": "7", "source": "TradingQ&A", "text": "My income is irregular because I am a freelancer. I am worried that my SIP debit may fail in months when client payments are delayed.", "relevant": true}
+{"row": "8", "source": "App Store review", "text": "Can you add more workout plans and improve the step-tracking accuracy? I use this app mainly for fitness.", "relevant": false}
+{"row": "9", "source": "Play Store review", "text": "After the market fell, I checked my portfolio several times. I am confused whether short-term losses mean my SIP is failing.", "relevant": true}
+{"row": "10", "source": "YouTube comment", "text": "I want to pause my SIP for a few months because of an unexpected family expense. I hope I can resume it later without losing my progress.", "relevant": true}
+{"row": "11", "source": "TradingQ&A", "text": "Which mutual fund should I choose for a three-year goal? I am new to investing and want low risk.", "relevant": true}
+{"row": "12", "source": "App Store review", "text": "I asked my friends whether I should stop my SIP after poor returns. Most of them told me to stay invested for the long term.", "relevant": true}
+{"row": "13", "source": "Play Store review", "text": "I redeemed my mutual-fund investment because I needed money urgently for a medical emergency.", "relevant": true}
+{"row": "14", "source": "YouTube comment", "text": "This video explained index funds well, but I still do not understand how SIP returns are calculated.", "relevant": true}
+{"row": "15", "source": "TradingQ&A", "text": "My first SIP instalment went through, but my portfolio value is lower than the amount invested. Is this normal?", "relevant": true}
+{"row": "16", "source": "App Store review", "text": "I reduced my SIP amount after my business had a slow season, but I want to continue investing when cash flow improves.", "relevant": true}
+{"row": "17", "source": "Play Store review", "text": "The food delivery service is convenient, but the delivery charges have increased recently.", "relevant": false}
+{"row": "18", "source": "YouTube comment", "text": "I stopped my SIP because I could not understand the app interface and could not find clear information about my payment status.", "relevant": true}
+{"row": "19", "source": "TradingQ&A", "text": "I continued my SIP despite the market dip because I understand that short-term volatility is normal for long-term investing.", "relevant": true}
